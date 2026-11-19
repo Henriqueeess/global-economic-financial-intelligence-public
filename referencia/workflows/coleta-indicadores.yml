@@ -1,0 +1,110 @@
+# Coleta diária de indicadores e geração do painel
+# Roda às 05h47 (America/Sao_Paulo; 08h47 UTC), antes do briefing das 07h30.
+# A folga de quase duas horas cobre os atrasos do agendamento do GitHub Actions,
+# que pode adiar ou pular execuções agendadas em horários de fila cheia.
+# O horário fora da hora cheia reduz atrasos da fila do GitHub Actions.
+# Chaves de APIs gratuitas ficam em Settings → Secrets and variables → Actions,
+# nunca em arquivo. Sem a chave, o indicador é pulado e aparece em "Fora do painel hoje".
+# Para rodar à mão: Actions → Coleta de indicadores → Run workflow
+# (marque "backfill" para rebuscar o histórico completo desde backfill_desde).
+
+name: Coleta de indicadores
+
+on:
+  schedule:
+    - cron: "47 8 * * *"
+  workflow_dispatch:
+    inputs:
+      backfill:
+        description: "Rebuscar todo o histórico (desde backfill_desde em config/indicadores.yaml)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: coleta-indicadores
+  cancel-in-progress: false
+
+jobs:
+  coleta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Baixar o repositório
+        uses: actions/checkout@v4
+
+      - name: Preparar o Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Testes
+        run: python -m pytest -q tests
+
+      - name: Coletar séries
+        env:
+          TZ: America/Sao_Paulo
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          BLS_API_KEY: ${{ secrets.BLS_API_KEY }}
+          BANXICO_TOKEN: ${{ secrets.BANXICO_TOKEN }}
+          BCENTRAL_USER: ${{ secrets.BCENTRAL_USER }}
+          BCENTRAL_PASS: ${{ secrets.BCENTRAL_PASS }}
+        run: |
+          if [ "${{ inputs.backfill }}" = "true" ]; then
+            python scripts/coletar_series.py --backfill
+          else
+            python scripts/coletar_series.py
+          fi
+
+      - name: Gerar o painel
+        env:
+          TZ: America/Sao_Paulo
+        run: python scripts/gerar_painel.py
+
+      - name: Checar segredos e escopo
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          BLS_API_KEY: ${{ secrets.BLS_API_KEY }}
+          BANXICO_TOKEN: ${{ secrets.BANXICO_TOKEN }}
+          BCENTRAL_USER: ${{ secrets.BCENTRAL_USER }}
+          BCENTRAL_PASS: ${{ secrets.BCENTRAL_PASS }}
+        run: |
+          git add dados/ painel/
+          # só dados/ e painel/ podem mudar
+          if git status --porcelain | grep -vE '^.. (dados|painel)/'; then
+            echo "Arquivos fora de dados/ e painel/ foram alterados; nada será gravado."; exit 1
+          fi
+          # padrões de credenciais (os mesmos da etapa 7)
+          if git diff --cached | grep -qEi '(ghp_|gho_|github_pat_|sk-[a-z0-9]{20,}|xox[abp]-|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|api[_-]?key[\"'\'' ]*[:=]|token[\"'\'' ]*[:=]|password[\"'\'' ]*[:=]|senha[\"'\'' ]*[:=])'; then
+            echo "SEGREDO_SUSPEITO: padrão de credencial no conteúdo; nada será gravado."; exit 1
+          fi
+          # o valor de cada chave configurada não pode aparecer em nenhum arquivo
+          for var in FRED_API_KEY BLS_API_KEY BANXICO_TOKEN BCENTRAL_USER BCENTRAL_PASS; do
+            valor="${!var}"
+            if [ -n "$valor" ] && git diff --cached | grep -qF -- "$valor"; then
+              echo "SEGREDO_SUSPEITO: valor de $var no conteúdo; nada será gravado."; exit 1
+            fi
+          done
+          echo "SEM_SEGREDOS"
+
+      - name: Gravar e publicar
+        run: |
+          if git diff --cached --quiet; then
+            echo "Nada novo para gravar."; exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Indicadores $(TZ=America/Sao_Paulo date +%Y-%m-%d)"
+          for espera in 2 4 8 16; do
+            git push origin HEAD:main && exit 0
+            echo "Push recusado; integrando a main remota e tentando de novo em ${espera}s."
+            sleep "$espera"
+            git pull --no-rebase --no-edit origin main
+          done
+          echo "Push falhou após 4 tentativas."; exit 1

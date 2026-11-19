@@ -1,0 +1,75 @@
+# Parâmetros gerais de execução
+# Alterações neste arquivo são feitas apenas por pull request.
+
+projeto: global-economic-financial-intelligence
+versao_config: 1
+
+fuso_horario: America/Sao_Paulo
+
+agendamento:
+  ativo: true               # ativado em 18/11/2026, após 3 execuções manuais validadas
+  dias: [domingo, segunda, terca, quarta, quinta, sexta, sabado]   # todos os dias (decisão de 18/11/2026)
+  horario: "07:30"
+  cron: "CRON_TZ=America/Sao_Paulo 30 7 * * *"
+
+janela_noticias:
+  horas: 24                 # publicações das últimas 24 horas antes do início da execução
+  incluir_temas_em_andamento: true
+  marcar_anteriores_como: "Em andamento / Ongoing"
+
+idiomas_pesquisa: [en, pt, es]
+idiomas_adicionais_sob_demanda: [zh, ja, de, fr, ar, ru]
+
+relatorio:
+  edicoes:
+    - arquivo: relatorio-en.md
+      idioma: en
+      nome: "International Edition"
+      modelo: modelos/relatorio-en.md
+    - arquivo: relatorio-pt.md
+      idioma: pt-BR
+      nome: "Edição em português"
+      modelo: modelos/relatorio-pt.md
+  tempo_leitura_alvo_min: 20      # por edição
+  limite_itens:
+    resumo_executivo: 6
+    economia_brasileira: 6
+    economia_internacional: 8
+    politica: 5
+    mercados: 6
+    geopolitica: 5
+  english_learning_corner_expressoes: 5
+
+saida:
+  pasta_base: relatorios
+  padrao_pasta: "{AAAA}/{MM}/{AAAA}-{MM}-{DD}_{HHMM}"   # horário de início, fuso America/Sao_Paulo
+  sufixo_execucao_manual: "-manual"
+  sufixo_se_existir: "-{N}"                            # -2, -3... nunca sobrescrever
+  arquivos:
+    - relatorio-en.md
+    - relatorio-pt.md
+    - fontes.json
+    - verificacao.md
+    - paridade.md
+    - execucao.log
+
+git:
+  branch_relatorios: main
+  mensagem_commit: "Relatório {AAAA}-{MM}-{DD} {HH}h{MM}{sufixo}"
+  tentativas_push: 4
+  pastas_permitidas_na_execucao: [relatorios, estado]
+  # dados/ e painel/ são gravados só pelo workflow de coleta de indicadores (05h47), nunca pelo agente
+
+painel_indicadores:
+  catalogo: config/indicadores.yaml
+  workflow: .github/workflows/coleta-indicadores.yml
+  horario: "06:47"           # antes do briefing das 07h30
+  ultimo: [painel/ultimo-pt.md, painel/ultimo-en.md]
+
+aviso_email:
+  ativo: true
+  metodo: issue do GitHub aberta por .github/workflows/aviso-relatorio.yml
+  conteudo: International Edition completa no corpo do e-mail (newsletter) e links da edição em português, fontes, verificação e paridade
+  observacao: o agente não envia e-mails; o GitHub notifica quem acompanha o repositório
+
+fontes_pagas_permitidas: false

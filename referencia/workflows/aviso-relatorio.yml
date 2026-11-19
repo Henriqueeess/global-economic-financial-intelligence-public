@@ -1,0 +1,102 @@
+# Aviso de relatório novo
+# Quando uma execução grava um relatório na main, esta automação abre uma issue
+# com a International Edition completa no corpo (formato de newsletter) e o link
+# da edição em português. O GitHub envia o e-mail de
+# notificação: a issue é atribuída ao dono do repositório, que recebe o aviso
+# mesmo com o Watch em "Participating and @mentions".
+# Para testar sem esperar um relatório novo: Actions → Aviso de relatório novo →
+# Run workflow, informando a pasta de um relatório existente.
+# Usa apenas o GITHUB_TOKEN automático do próprio GitHub: nenhuma senha ou chave
+# é guardada no repositório.
+
+name: Aviso de relatório novo
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "relatorios/**/relatorio-pt.md"
+      - "relatorios/**/relatorio-en.md"
+  workflow_dispatch:
+    inputs:
+      pasta:
+        description: "Pasta de um relatório já gravado, para testar o aviso (ex.: relatorios/2026/11/2026-11-18_1233-manual)"
+        required: true
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  aviso:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Baixar o repositório
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 50
+
+      - name: Abrir uma issue para cada relatório novo
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTES: ${{ github.event.before }}
+          DEPOIS: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+          DONO: ${{ github.repository_owner }}
+          EVENTO: ${{ github.event_name }}
+          PASTA_TESTE: ${{ inputs.pasta }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENTO" = "workflow_dispatch" ]; then
+            if [ ! -f "${PASTA_TESTE}/relatorio-pt.md" ] && [ ! -f "${PASTA_TESTE}/relatorio-en.md" ]; then
+              echo "Pasta sem relatório: ${PASTA_TESTE}"; exit 1
+            fi
+            printf '%s\n' "$PASTA_TESTE" > pastas.txt
+            PREFIXO="Teste de aviso — "
+          else
+            PREFIXO=""
+          if [ "$ANTES" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$ANTES" 2>/dev/null; then
+            ANTES="$(git rev-parse "$DEPOIS^" 2>/dev/null || git hash-object -t tree /dev/null)"
+          fi
+          # Pastas de execução com relatório novo neste push (arquivos adicionados, nunca alterados)
+          git diff --name-only --diff-filter=A "$ANTES" "$DEPOIS" -- 'relatorios/**/relatorio-*.md' \
+            | xargs -r -n1 dirname | sort -u > pastas.txt
+          if [ ! -s pastas.txt ]; then echo "Nenhum relatório novo."; exit 0; fi
+          fi
+
+          LIMITE=60000   # o GitHub aceita até 65.536 caracteres no corpo de uma issue
+
+          while read -r pasta; do
+            nome="$(basename "$pasta")"
+            titulo="${PREFIXO}Relatório ${nome}"
+            base="https://github.com/${REPO}/blob/main/${pasta}"
+            {
+              echo "Edição em português: ${base}/relatorio-pt.md · Sources: ${base}/fontes.json · Verification: ${base}/verificacao.md · Parity: ${base}/paridade.md"
+              echo
+              echo "---"
+              echo
+              if [ -f "${pasta}/relatorio-en.md" ]; then
+                if [ "$(wc -c < "${pasta}/relatorio-en.md")" -le "$LIMITE" ]; then
+                  cat "${pasta}/relatorio-en.md"
+                else
+                  head -c "$LIMITE" "${pasta}/relatorio-en.md"
+                  echo
+                  echo
+                  echo "_The full edition is longer than an email can carry. Continue reading: ${base}/relatorio-en.md_"
+                fi
+              else
+                echo "_The International Edition was not found in this run. Check: ${base}/_"
+              fi
+              echo
+              echo "---"
+              echo "_Automatic notice. You can close this issue after reading._"
+            } > corpo.md
+            if [ "$EVENTO" != "workflow_dispatch" ] && gh issue list --repo "$REPO" --state all --search "\"${titulo}\" in:title" --json title -q '.[].title' | grep -qxF "$titulo"; then
+              echo "Issue já existe para ${nome}; nada a fazer."
+            else
+              # Atribuir ao dono do repositório garante a notificação por e-mail,
+              # qualquer que seja a opção de Watch escolhida.
+              gh issue create --repo "$REPO" --title "$titulo" --body-file corpo.md --assignee "$DONO"
+            fi
+          done < pastas.txt

@@ -1,0 +1,106 @@
+# Espelho público do código
+# A cada mudança de código, instruções ou documentação na main, copia para um
+# repositório público só os caminhos listados em scripts/espelho/montar.sh.
+# Relatórios, estado, dados e painel nunca saem deste repositório privado.
+# O público recebe commits do bot, sem o histórico deste repositório.
+#
+# Configuração única (feita pelo responsável):
+#   - Variável ESPELHO_REPO (Settings → Secrets and variables → Actions → Variables),
+#     por exemplo "Henriqueeess/global-economic-financial-intelligence-public".
+#   - Segredo ESPELHO_TOKEN: token fine-grained com acesso só ao repositório público
+#     e permissão Contents: Read and write. Nunca em arquivo.
+# Sem os dois, o workflow avisa e termina sem erro.
+# Para rodar à mão: Actions → Espelho público → Run workflow.
+
+name: Espelho público
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "CLAUDE.md"
+      - ".gitignore"
+      - "requirements.txt"
+      - "config/**"
+      - "etapas/**"
+      - "modelos/**"
+      - "scripts/**"
+      - "tests/**"
+      - "docs/**"
+      - "integracoes/**"
+      - "publico/**"
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: espelho-publico
+  cancel-in-progress: false
+
+jobs:
+  espelho:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Conferir a configuração
+        id: cfg
+        env:
+          ESPELHO_REPO: ${{ vars.ESPELHO_REPO }}
+          ESPELHO_TOKEN: ${{ secrets.ESPELHO_TOKEN }}
+        run: |
+          if [ -z "$ESPELHO_REPO" ] || [ -z "$ESPELHO_TOKEN" ]; then
+            echo "::notice::Espelho não configurado (faltam ESPELHO_REPO ou ESPELHO_TOKEN); nada a fazer."
+            echo "ativo=false" >> "$GITHUB_OUTPUT"
+          elif [ "$ESPELHO_REPO" = "$GITHUB_REPOSITORY" ]; then
+            echo "::error::ESPELHO_REPO não pode ser este próprio repositório."; exit 1
+          else
+            echo "ativo=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Baixar o repositório privado
+        if: steps.cfg.outputs.ativo == 'true'
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Montar e checar a cópia pública
+        if: steps.cfg.outputs.ativo == 'true'
+        env:
+          ESPELHO_TOKEN: ${{ secrets.ESPELHO_TOKEN }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          BLS_API_KEY: ${{ secrets.BLS_API_KEY }}
+          BANXICO_TOKEN: ${{ secrets.BANXICO_TOKEN }}
+          BCENTRAL_USER: ${{ secrets.BCENTRAL_USER }}
+          BCENTRAL_PASS: ${{ secrets.BCENTRAL_PASS }}
+        run: bash scripts/espelho/montar.sh "$RUNNER_TEMP/copia"
+
+      - name: Publicar no repositório público
+        if: steps.cfg.outputs.ativo == 'true'
+        env:
+          ESPELHO_REPO: ${{ vars.ESPELHO_REPO }}
+          ESPELHO_TOKEN: ${{ secrets.ESPELHO_TOKEN }}
+        run: |
+          set -euo pipefail
+          destino="$RUNNER_TEMP/publico"
+          url="https://x-access-token:${ESPELHO_TOKEN}@github.com/${ESPELHO_REPO}.git"
+          git clone --quiet "$url" "$destino" 2>/dev/null || { echo "::error::Não foi possível clonar ${ESPELHO_REPO}. Confira o nome e as permissões do token."; exit 1; }
+          cd "$destino"
+          git checkout -q -B main
+          # Substitui todo o conteúdo pela cópia montada (mantém só o .git).
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -a "$RUNNER_TEMP/copia/." .
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nada novo para o repositório público."; exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -q -m "Atualiza a cópia pública ($(TZ=America/Sao_Paulo date '+%Y-%m-%d %H:%M'))"
+          for espera in 2 4 8 16; do
+            git push -q origin main && { echo "Cópia pública publicada em ${ESPELHO_REPO}."; exit 0; }
+            echo "Push falhou; nova tentativa em ${espera}s."
+            sleep "$espera"
+          done
+          echo "::error::Push para ${ESPELHO_REPO} falhou após 4 tentativas."; exit 1

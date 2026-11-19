@@ -1,0 +1,339 @@
+# Fontes do projeto
+# Alterações neste arquivo são feitas apenas por pull request.
+#
+# Campos:
+#   categoria: oficial | agencia | veiculo | analise
+#   prioridade: 1 (mais alta) a 3
+#   paywall: nao | parcial | sim
+#   acesso: api | rss | busca | pagina   (como a fonte é consultada)
+#   status: a_validar | validado | bloqueado
+#     - a_validar: endereço ainda não testado neste ambiente
+#     - validado: lido com sucesso em uma execução (registrar data em "validado_em")
+#     - bloqueado: recusa leitura automática; usar só título público e confirmar em outra fonte
+#
+# Regra: apenas fontes gratuitas. Fontes com paywall entram só com o que é público.
+
+oficiais:
+  brasil:
+    - nome: Banco Central do Brasil
+      dominio: bcb.gov.br
+      categoria: oficial
+      prioridade: 1
+      paywall: nao
+      acesso: [api, pagina]
+      apis:
+        sgs: "https://api.bcb.gov.br/dados/serie/bcdata.sgs.{codigo}/dados/ultimos/{n}?formato=json"
+        olinda_expectativas: "https://olinda.bcb.gov.br/olinda/servico/Expectativas/versao/v1/odata/"
+        olinda_ptax: "https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/"
+      series_sgs_a_validar:
+        meta_selic: 432
+        ipca_mensal: 433
+        dolar_ptax_venda: 1
+      status: validado
+      validado_em: "2026-11-18"
+      observacao: SGS e Olinda (PTAX, Expectativas) responderam via curl na execução 2026-11-18_1428-manual
+    - nome: IBGE
+      dominio: ibge.gov.br
+      categoria: oficial
+      prioridade: 1
+      paywall: nao
+      acesso: [api, pagina]
+      apis:
+        agregados_sidra: "https://servicodados.ibge.gov.br/api/v3/agregados"
+        calendario: "https://servicodados.ibge.gov.br/api/v3/calendario/"
+        noticias: "https://servicodados.ibge.gov.br/api/v3/noticias/"
+      exemplo_ipca: "https://servicodados.ibge.gov.br/api/v3/agregados/7060/periodos/-1/variaveis/63|2265?localidades=N1[all]"
+      observacao: usar curl -g (a URL tem colchetes); a API de notícias traz título, data e introdução dos releases da Agência IBGE
+      status: validado
+      validado_em: "2026-11-18"
+    - nome: Tesouro Nacional
+      dominio: gov.br/tesouronacional
+      categoria: oficial
+      prioridade: 2
+      paywall: nao
+      acesso: [pagina]
+      paginas:
+        - https://www.gov.br/tesouronacional/
+        - https://www.tesourotransparente.gov.br/
+      status: a_validar
+    - nome: Ministério da Fazenda
+      dominio: gov.br/fazenda
+      categoria: oficial
+      prioridade: 2
+      paywall: nao
+      acesso: [pagina, busca]
+      status: a_validar
+    - nome: Câmara dos Deputados e Senado Federal
+      dominio: [camara.leg.br, senado.leg.br]
+      categoria: oficial
+      prioridade: 2
+      paywall: nao
+      acesso: [pagina, busca]
+      status: a_validar
+
+  estados_unidos:
+    - nome: Federal Reserve
+      dominio: federalreserve.gov
+      categoria: oficial
+      prioridade: 1
+      paywall: nao
+      acesso: [rss, pagina]
+      rss:
+        - https://www.federalreserve.gov/feeds/press_all.xml
+      status: a_validar
+    - nome: U.S. Department of the Treasury
+      dominio: home.treasury.gov
+      categoria: oficial
+      prioridade: 1
+      paywall: nao
+      acesso: [pagina]
+      acesso: [api, pagina]
+      apis:
+        curva_csv: "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/{AAAA}/all?type=daily_treasury_yield_curve&field_tdr_date_value={AAAA}&page&_format=csv"
+        fiscal_data: "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/"
+      observacao: curva de juros diária (Daily Treasury Par Yield Curve Rates); CSV e Fiscal Data responderam em 18/11/2026
+      status: validado
+      validado_em: "2026-11-18"
+    - nome: Bureau of Labor Statistics (BLS)
+      dominio: bls.gov
+      categoria: oficial
+      prioridade: 1
+      paywall: nao
+      acesso: [api, pagina]
+      apis:
+        v2: "https://api.bls.gov/publicAPI/v2/timeseries/data/"
+      observacao: sem chave o limite diário é compartilhado e já estava esgotado em 18/11/2026 (REQUEST_NOT_PROCESSED); usar chave gratuita via variável de ambiente BLS_API_KEY
+      status: a_validar
+    - nome: Bureau of Economic Analysis (BEA)
+      dominio: bea.gov
+      categoria: oficial
+      prioridade: 1
+      paywall: nao
+      acesso: [api, pagina]
+      observacao: API exige chave gratuita (variável de ambiente BEA_API_KEY); sem chave, usar as páginas de release
+      status: a_validar
+    - nome: FRED (Federal Reserve Bank of St. Louis)
+      dominio: fred.stlouisfed.org
+      categoria: oficial
+      prioridade: 2
+      paywall: nao
+      acesso: [api]
+      apis:
+        observacoes: "https://api.stlouisfed.org/fred/series/observations"
+      observacao: exige chave gratuita (variável de ambiente FRED_API_KEY); sem chave, etapa é pulada e registrada no log
+      status: a_validar
+
+  europa:
+    - nome: European Central Bank (ECB)
+      dominio: ecb.europa.eu
+      categoria: oficial
+      prioridade: 1
+      paywall: nao
+      acesso: [api, rss, pagina]
+      apis:
+        data_portal: "https://data-api.ecb.europa.eu/service/data/"
+      series_validadas:
+        eur_usd_referencia: EXR/D.USD.EUR.SP00.A
+        taxa_deposito: FM/B.U2.EUR.4F.KR.DFR.LEV
+      rss:
+        - https://www.ecb.europa.eu/rss/press.html
+      status: validado
+      validado_em: "2026-11-18"
+    - nome: Eurostat
+      dominio: ec.europa.eu/eurostat
+      categoria: oficial
+      prioridade: 1
+      paywall: nao
+      acesso: [api, pagina]
+      apis:
+        estatisticas: "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/"
+      inflacao_hicp: "prc_hicp_minr?geo=EA&unit=RCH_A&coicop18=TOTAL&lastTimePeriod=3"
+      observacao: o conjunto antigo prc_hicp_manr foi descontinuado (só vai até 2025); usar prc_hicp_minr (ECOICOP ver.2)
+      status: validado
+      validado_em: "2026-11-18"
+    - nome: Bank of England
+      dominio: bankofengland.co.uk
+      categoria: oficial
+      prioridade: 1
+      paywall: nao
+      acesso: [pagina]
+      observacao: a base estatística (IADB) recusa acesso automatizado (redireciona para página de erro); usar só as páginas de notícias
+      status: a_validar
+    - nome: Office for National Statistics (ONS)
+      dominio: ons.gov.uk
+      categoria: oficial
+      prioridade: 2
+      paywall: nao
+      acesso: [pagina]
+      status: a_validar
+    - nome: European Commission — Press Corner
+      dominio: ec.europa.eu/commission/presscorner
+      categoria: oficial
+      prioridade: 2
+      paywall: nao
+      acesso: [pagina]
+      status: a_validar
+
+  asia:
+    - nome: People's Bank of China (PBOC)
+      dominio: pbc.gov.cn
+      categoria: oficial
+      prioridade: 1
+      paywall: nao
+      acesso: [pagina]
+      observacao: site lento e parte do conteúdo só em chinês; anúncios de operações de mercado aberto abriram por curl em 18/11/2026
+      status: validado
+      validado_em: "2026-11-18"
+    - nome: National Bureau of Statistics of China (NBS)
+      dominio: stats.gov.cn
+      categoria: oficial
+      prioridade: 1
+      paywall: nao
+      acesso: [pagina]
+      paginas:
+        - https://www.stats.gov.cn/english/
+      status: a_validar
+    - nome: Bank of Japan
+      dominio: boj.or.jp
+      categoria: oficial
+      prioridade: 1
+      paywall: nao
+      acesso: [pagina]
+      status: a_validar
+
+  america_latina:
+    - nome: Banco de México (Banxico)
+      dominio: banxico.org.mx
+      categoria: oficial
+      prioridade: 2
+      paywall: nao
+      acesso: [api, pagina]
+      apis:
+        sie: "https://www.banxico.org.mx/SieAPIRest/service/v1/series/{serie}/datos/oportuno"
+      observacao: a API SIE exige token gratuito (variável de ambiente BANXICO_TOKEN, enviada no cabeçalho Bmx-Token); sem token, registrar falha motivo=sem_chave
+      status: a_validar
+    - nome: Banco Central de la República Argentina (BCRA)
+      dominio: bcra.gob.ar
+      categoria: oficial
+      prioridade: 2
+      paywall: nao
+      acesso: [api, pagina]
+      apis:
+        monetarias: "https://api.bcra.gob.ar/estadisticas/v4.0/monetarias"
+        cambiarias: "https://api.bcra.gob.ar/estadisticascambiarias/v1.0/Cotizaciones"
+      observacao: a versão v3.0 foi desativada (HTTP 410); usar v4.0, que não exige chave
+      status: validado
+      validado_em: "2026-11-18"
+    - nome: INDEC (Argentina)
+      dominio: indec.gob.ar
+      categoria: oficial
+      prioridade: 3
+      paywall: nao
+      acesso: [api, pagina]
+      apis:
+        series_datos_gob_ar: "https://apis.datos.gob.ar/series/api/series/?ids={serie}&last={n}"
+      series_validadas:
+        ipc_nivel_general_nacional: 148.3_INIVELNAL_DICI_M_26
+      status: validado
+      validado_em: "2026-11-18"
+    - nome: Banco Central de Chile
+      dominio: bcentral.cl
+      categoria: oficial
+      prioridade: 3
+      paywall: nao
+      acesso: [api, pagina]
+      apis:
+        siete: "https://si3.bcentral.cl/SieteRestWS/SieteRestWS.ashx?function=GetSeries&timeseries={serie}"
+      observacao: a API SIETE exige usuário e senha gratuitos (variáveis BCENTRAL_USER e BCENTRAL_PASS); a página de notícias carrega por JavaScript
+      status: a_validar
+
+  multilaterais:
+    - nome: OPEP
+      dominio: opec.org
+      categoria: oficial
+      prioridade: 2
+      paywall: nao
+      acesso: [pagina]
+      status: a_validar
+    - nome: FMI
+      dominio: imf.org
+      categoria: oficial
+      prioridade: 2
+      paywall: nao
+      acesso: [pagina]
+      observacao: a API DataMapper recusou acesso automatizado em 18/11/2026 (HTTP 403 do próprio site)
+      status: bloqueado
+
+agencias:
+  - nome: Reuters
+    dominio: reuters.com
+    idioma: [en, es, pt]
+    categoria: agencia
+    prioridade: 1
+    paywall: parcial
+    acesso: [busca, pagina]
+    status: a_validar
+  - nome: Associated Press (AP)
+    dominio: apnews.com
+    idioma: [en, es]
+    categoria: agencia
+    prioridade: 1
+    paywall: nao
+    acesso: [busca, pagina]
+    observacao: textos da AP também aparecem em parceiros; citar sempre a AP como autora
+    status: a_validar
+  - nome: Bloomberg
+    dominio: bloomberg.com
+    idioma: [en]
+    categoria: agencia
+    prioridade: 1
+    paywall: sim
+    acesso: [busca]
+    observacao: recusou leitura automática no teste de 18/11/2026; usar só título público e confirmar fatos em fonte aberta
+    status: bloqueado
+
+sindicacao:
+  # Sites parceiros onde textos de agências aparecem republicados. Podem ser usados
+  # quando o original não abrir, sempre citando a agência como autora ("Reuters, via AOL").
+  parceiros_conhecidos: [aol.com, finance.yahoo.com, ksat.com, fox19.com, rigzone.com, usnews.com]
+  regra: tentar primeiro o domínio da agência (reuters.com, apnews.com, bloomberg.com)
+
+fontes_de_baixa_prioridade:
+  # Só entram se nenhuma fonte melhor trouxer o dado, rotuladas como Análise.
+  - tradingkey.com
+
+veiculos:
+  financeiro_internacional:
+    - {nome: Financial Times, dominio: ft.com, idioma: en, prioridade: 1, paywall: sim, acesso: [busca], status: a_validar}
+    - {nome: The Wall Street Journal, dominio: wsj.com, idioma: en, prioridade: 1, paywall: sim, acesso: [busca], status: a_validar}
+    - {nome: The Economist, dominio: economist.com, idioma: en, prioridade: 2, paywall: sim, acesso: [busca], status: a_validar}
+    - {nome: CNBC, dominio: cnbc.com, idioma: en, prioridade: 1, paywall: parcial, acesso: [busca, pagina], observacao: "retornou erro de leitura no teste de 18/11/2026", status: a_validar}
+    - {nome: MarketWatch, dominio: marketwatch.com, idioma: en, prioridade: 2, paywall: parcial, acesso: [busca, pagina], status: a_validar}
+    - {nome: Nikkei Asia, dominio: asia.nikkei.com, idioma: en, prioridade: 1, paywall: parcial, acesso: [busca, pagina], status: a_validar}
+    - {nome: South China Morning Post, dominio: scmp.com, idioma: en, prioridade: 1, paywall: parcial, acesso: [busca, pagina], status: a_validar}
+    - {nome: Caixin Global, dominio: caixinglobal.com, idioma: en, prioridade: 2, paywall: parcial, acesso: [busca, pagina], status: a_validar}
+  geopolitica:
+    - {nome: BBC, dominio: bbc.com, idioma: [en, pt, es], prioridade: 1, paywall: nao, acesso: [busca, pagina], status: a_validar}
+    - {nome: Foreign Affairs, dominio: foreignaffairs.com, idioma: en, prioridade: 2, paywall: parcial, acesso: [busca], categoria: analise, status: a_validar}
+  brasil:
+    - {nome: Valor Econômico, dominio: valor.globo.com, idioma: pt, prioridade: 1, paywall: parcial, acesso: [busca, pagina], status: a_validar}
+    - {nome: Estadão, dominio: estadao.com.br, idioma: pt, prioridade: 1, paywall: parcial, acesso: [busca, pagina], status: a_validar}
+    - {nome: InfoMoney, dominio: infomoney.com.br, idioma: pt, prioridade: 1, paywall: nao, acesso: [busca, pagina], observacao: "leitura funcionou no teste de 18/11/2026", status: a_validar}
+    - {nome: Folha de S.Paulo, dominio: folha.uol.com.br, idioma: pt, prioridade: 2, paywall: parcial, acesso: [busca, pagina], status: a_validar}
+    - {nome: O Globo, dominio: oglobo.globo.com, idioma: pt, prioridade: 2, paywall: parcial, acesso: [busca, pagina], status: a_validar}
+  america_latina_espanha:
+    - {nome: El País, dominio: elpais.com, idioma: es, prioridade: 1, paywall: parcial, acesso: [busca, pagina], status: a_validar}
+    - {nome: Expansión, dominio: expansion.com, idioma: es, prioridade: 2, paywall: parcial, acesso: [busca, pagina], status: a_validar}
+    - {nome: El Financiero, dominio: elfinanciero.com.mx, idioma: es, prioridade: 2, paywall: parcial, acesso: [busca, pagina], status: a_validar}
+    - {nome: La Nación, dominio: lanacion.com.ar, idioma: es, prioridade: 2, paywall: parcial, acesso: [busca, pagina], status: a_validar}
+
+descoberta:
+  - nome: GDELT
+    dominio: gdeltproject.org
+    uso: descobrir cobertura em outros idiomas; nunca citado como fonte de um fato
+    status: a_validar
+
+nao_citar:
+  # Agregadores e sites que reproduzem conteúdo de terceiros: podem ajudar a descobrir a notícia,
+  # mas a citação vai sempre para a publicação original.
+  regra: "Se a página reproduz texto de outro veículo ou agência, localizar e citar o original."

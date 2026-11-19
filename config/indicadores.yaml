@@ -1,0 +1,427 @@
+# Catálogo de indicadores do painel diário
+# Alterações neste arquivo são feitas apenas por pull request.
+#
+# Cada indicador vira um arquivo dados/series/<id>.csv, gravado pelo workflow
+# .github/workflows/coleta-indicadores.yml (scripts/coletar_series.py).
+# O agente do briefing só lê esses arquivos; nunca os altera.
+#
+# Campos:
+#   id            nome do arquivo e chave única (minúsculas, sem acento)
+#   nome_pt/en    rótulo nas duas edições do painel
+#   regiao        brasil | eua | zona_do_euro | america_latina
+#   unidade       texto exibido ao lado do valor
+#   frequencia    diaria | semanal | mensal | reuniao
+#   variacao      pp (diferença em pontos percentuais) | pct (variação percentual)
+#   decimais      casas decimais exibidas
+#   fonte         tipo e parâmetros da API (ver scripts/indicadores/fontes.py)
+#   requer_chave  variável de ambiente necessária; sem ela, o indicador é pulado e registrado no log
+#   ativo         false desliga o indicador sem apagar o histórico
+
+versao: 1
+backfill_desde: "2016-01-01"     # decisão de 18/11/2026: 10 anos de histórico
+janela_incremental_dias: 45      # a coleta diária rebusca este período para captar revisões
+
+regioes:
+  - {id: brasil, nome_pt: Brasil, nome_en: Brazil}
+  - {id: eua, nome_pt: Estados Unidos, nome_en: United States}
+  - {id: zona_do_euro, nome_pt: Zona do euro, nome_en: Euro area}
+  - {id: america_latina, nome_pt: América Latina, nome_en: Latin America}
+
+indicadores:
+  # ---------------- Brasil ----------------
+  - id: br_selic_meta
+    nome_pt: Meta Selic
+    nome_en: Selic target rate
+    regiao: brasil
+    unidade: "% a.a."
+    frequencia: reuniao
+    variacao: pp
+    decimais: 2
+    fonte: {tipo: bcb_sgs, codigo: 432}
+
+  - id: br_cdi
+    nome_pt: CDI (taxa diária)
+    nome_en: CDI (daily rate)
+    regiao: brasil
+    unidade: "% a.d."
+    frequencia: diaria
+    variacao: pp
+    decimais: 6
+    fonte: {tipo: bcb_sgs, codigo: 12}
+
+  - id: br_dolar_ptax
+    nome_pt: Dólar PTAX venda
+    nome_en: USD/BRL PTAX (offer)
+    regiao: brasil
+    unidade: "R$"
+    frequencia: diaria
+    variacao: pct
+    decimais: 4
+    fonte: {tipo: bcb_sgs, codigo: 1}
+
+  - id: br_euro_ptax
+    nome_pt: Euro PTAX venda
+    nome_en: EUR/BRL PTAX (offer)
+    regiao: brasil
+    unidade: "R$"
+    frequencia: diaria
+    variacao: pct
+    decimais: 4
+    fonte: {tipo: bcb_sgs, codigo: 21619}
+
+  - id: br_ipca_mensal
+    nome_pt: IPCA mensal
+    nome_en: IPCA inflation (month)
+    regiao: brasil
+    unidade: "%"
+    frequencia: mensal
+    variacao: pp
+    decimais: 2
+    fonte: {tipo: bcb_sgs, codigo: 433}
+
+  - id: br_ipca_12m
+    nome_pt: IPCA em 12 meses
+    nome_en: IPCA inflation (12 months)
+    regiao: brasil
+    unidade: "%"
+    frequencia: mensal
+    variacao: pp
+    decimais: 2
+    fonte: {tipo: bcb_sgs, codigo: 13522}
+
+  - id: br_igpm_mensal
+    nome_pt: IGP-M mensal
+    nome_en: IGP-M (month)
+    regiao: brasil
+    unidade: "%"
+    frequencia: mensal
+    variacao: pp
+    decimais: 2
+    fonte: {tipo: bcb_sgs, codigo: 189}
+
+  - id: br_ibc_br
+    nome_pt: IBC-Br (dessazonalizado)
+    nome_en: IBC-Br activity index (s.a.)
+    regiao: brasil
+    unidade: "índice"
+    frequencia: mensal
+    variacao: pct
+    decimais: 2
+    fonte: {tipo: bcb_sgs, codigo: 24364}
+
+  - id: br_focus_ipca_12m
+    nome_pt: Focus — IPCA 12 meses à frente
+    nome_en: Focus — IPCA 12 months ahead
+    regiao: brasil
+    unidade: "%"
+    frequencia: diaria
+    variacao: pp
+    decimais: 2
+    fonte: {tipo: bcb_focus_12m, indicador: IPCA}
+
+  - id: br_focus_ipca_ano
+    nome_pt: Focus — IPCA do ano
+    nome_en: Focus — IPCA, current year
+    regiao: brasil
+    unidade: "%"
+    frequencia: diaria
+    variacao: pp
+    decimais: 2
+    fonte: {tipo: bcb_focus_anual, indicador: IPCA}
+
+  - id: br_focus_selic_ano
+    nome_pt: Focus — Selic no fim do ano
+    nome_en: Focus — Selic, year-end
+    regiao: brasil
+    unidade: "% a.a."
+    frequencia: diaria
+    variacao: pp
+    decimais: 2
+    fonte: {tipo: bcb_focus_anual, indicador: Selic}
+
+  - id: br_focus_cambio_ano
+    nome_pt: Focus — câmbio no fim do ano
+    nome_en: Focus — USD/BRL, year-end
+    regiao: brasil
+    unidade: "R$"
+    frequencia: diaria
+    variacao: pct
+    decimais: 2
+    fonte: {tipo: bcb_focus_anual, indicador: "Câmbio"}
+
+  - id: br_focus_pib_ano
+    nome_pt: Focus — PIB do ano
+    nome_en: Focus — GDP growth, current year
+    regiao: brasil
+    unidade: "%"
+    frequencia: diaria
+    variacao: pp
+    decimais: 2
+    fonte: {tipo: bcb_focus_anual, indicador: PIB Total}
+
+  # Curva de juros (Tesouro Direto). Vértices de prazo constante, interpolados
+  # linearmente entre títulos sem cupom; nunca extrapolados.
+  - id: br_pre_1a
+    nome_pt: Juro prefixado 1 ano
+    nome_en: Nominal yield, 1 year
+    regiao: brasil
+    unidade: "% a.a."
+    frequencia: diaria
+    variacao: pp
+    decimais: 2
+    fonte: {tipo: tesouro_direto_vertice, curva: prefixado, anos: 1}
+
+  - id: br_pre_3a
+    nome_pt: Juro prefixado 3 anos
+    nome_en: Nominal yield, 3 years
+    regiao: brasil
+    unidade: "% a.a."
+    frequencia: diaria
+    variacao: pp
+    decimais: 2
+    fonte: {tipo: tesouro_direto_vertice, curva: prefixado, anos: 3}
+
+  - id: br_pre_5a
+    nome_pt: Juro prefixado 5 anos
+    nome_en: Nominal yield, 5 years
+    regiao: brasil
+    unidade: "% a.a."
+    frequencia: diaria
+    variacao: pp
+    decimais: 2
+    fonte: {tipo: tesouro_direto_vertice, curva: prefixado, anos: 5}
+
+  - id: br_ipca_mais_5a
+    nome_pt: Juro real (IPCA+) 5 anos
+    nome_en: Real yield (IPCA+), 5 years
+    regiao: brasil
+    unidade: "% a.a."
+    frequencia: diaria
+    variacao: pp
+    decimais: 2
+    fonte: {tipo: tesouro_direto_vertice, curva: ipca, anos: 5}
+
+  - id: br_ipca_mais_10a
+    nome_pt: Juro real (IPCA+) 10 anos
+    nome_en: Real yield (IPCA+), 10 years
+    regiao: brasil
+    unidade: "% a.a."
+    frequencia: diaria
+    variacao: pp
+    decimais: 2
+    fonte: {tipo: tesouro_direto_vertice, curva: ipca, anos: 10}
+
+  - id: br_inflacao_implicita_5a
+    nome_pt: Inflação implícita 5 anos
+    nome_en: Breakeven inflation, 5 years
+    regiao: brasil
+    unidade: "% a.a."
+    frequencia: diaria
+    variacao: pp
+    decimais: 2
+    fonte: {tipo: derivado, operacao: inflacao_implicita, nominal: br_pre_5a, real: br_ipca_mais_5a}
+
+  - id: br_diferencial_selic_t3m
+    nome_pt: Diferencial Selic − Treasury 3 meses
+    nome_en: Selic minus 3-month Treasury
+    regiao: brasil
+    unidade: "p.p."
+    frequencia: diaria
+    variacao: pp
+    decimais: 2
+    fonte: {tipo: derivado, operacao: diferenca, a: br_selic_meta, b: us_t3m}
+
+  # ---------------- Estados Unidos ----------------
+  - id: us_t3m
+    nome_pt: Treasury 3 meses
+    nome_en: 3-month Treasury yield
+    regiao: eua
+    unidade: "%"
+    frequencia: diaria
+    variacao: pp
+    decimais: 2
+    fonte: {tipo: us_treasury, coluna: "3 Mo"}
+
+  - id: us_t2a
+    nome_pt: Treasury 2 anos
+    nome_en: 2-year Treasury yield
+    regiao: eua
+    unidade: "%"
+    frequencia: diaria
+    variacao: pp
+    decimais: 2
+    fonte: {tipo: us_treasury, coluna: "2 Yr"}
+
+  - id: us_t10a
+    nome_pt: Treasury 10 anos
+    nome_en: 10-year Treasury yield
+    regiao: eua
+    unidade: "%"
+    frequencia: diaria
+    variacao: pp
+    decimais: 2
+    fonte: {tipo: us_treasury, coluna: "10 Yr"}
+
+  - id: us_inclinacao_10a_2a
+    nome_pt: Inclinação da curva (10 anos − 2 anos)
+    nome_en: Yield curve slope (10y − 2y)
+    regiao: eua
+    unidade: "p.p."
+    frequencia: diaria
+    variacao: pp
+    decimais: 2
+    fonte: {tipo: derivado, operacao: diferenca, a: us_t10a, b: us_t2a}
+
+  - id: us_fed_funds
+    nome_pt: Fed funds efetiva
+    nome_en: Effective fed funds rate
+    regiao: eua
+    unidade: "%"
+    frequencia: diaria
+    variacao: pp
+    decimais: 2
+    fonte: {tipo: fred, serie: DFF}
+    requer_chave: FRED_API_KEY
+
+  - id: us_cpi_12m
+    nome_pt: CPI em 12 meses
+    nome_en: CPI inflation (12 months)
+    regiao: eua
+    unidade: "%"
+    frequencia: mensal
+    variacao: pp
+    decimais: 1
+    fonte: {tipo: bls, serie: CUUR0000SA0, calculo: variacao_12m}
+    requer_chave: BLS_API_KEY
+    ativo: false            # decisão de 18/11/2026: só a chave do FRED será cadastrada
+
+  - id: us_desemprego
+    nome_pt: Taxa de desemprego
+    nome_en: Unemployment rate
+    regiao: eua
+    unidade: "%"
+    frequencia: mensal
+    variacao: pp
+    decimais: 1
+    fonte: {tipo: bls, serie: LNS14000000}
+    requer_chave: BLS_API_KEY
+    ativo: false            # decisão de 18/11/2026: só a chave do FRED será cadastrada
+
+  # ---------------- Zona do euro ----------------
+  - id: ez_eurusd
+    nome_pt: EUR/USD (referência do BCE)
+    nome_en: EUR/USD (ECB reference rate)
+    regiao: zona_do_euro
+    unidade: "US$"
+    frequencia: diaria
+    variacao: pct
+    decimais: 4
+    fonte: {tipo: ecb, chave: EXR/D.USD.EUR.SP00.A}
+
+  - id: ez_taxa_deposito
+    nome_pt: Taxa de depósito do BCE
+    nome_en: ECB deposit facility rate
+    regiao: zona_do_euro
+    unidade: "%"
+    frequencia: reuniao
+    variacao: pp
+    decimais: 2
+    fonte: {tipo: ecb, chave: FM/B.U2.EUR.4F.KR.DFR.LEV}
+
+  - id: ez_hicp_12m
+    nome_pt: Inflação HICP em 12 meses
+    nome_en: HICP inflation (12 months)
+    regiao: zona_do_euro
+    unidade: "%"
+    frequencia: mensal
+    variacao: pp
+    decimais: 1
+    fonte: {tipo: eurostat, conjunto: prc_hicp_minr, filtros: {geo: EA, unit: RCH_A, coicop18: TOTAL}}
+
+  # ---------------- América Latina ----------------
+  - id: ar_dolar_oficial
+    nome_pt: Argentina — dólar oficial (BCRA)
+    nome_en: Argentina — official USD rate (BCRA)
+    regiao: america_latina
+    unidade: "ARS"
+    frequencia: diaria
+    variacao: pct
+    decimais: 2
+    fonte: {tipo: bcra_cambio, moeda: USD}
+
+  - id: ar_reservas
+    nome_pt: Argentina — reservas internacionais
+    nome_en: Argentina — international reserves
+    regiao: america_latina
+    unidade: "US$ mi"
+    frequencia: diaria
+    variacao: pct
+    decimais: 0
+    fonte: {tipo: bcra_monetaria, id_variavel: 1}
+
+  - id: ar_ipc_mensal
+    nome_pt: Argentina — IPC mensal (INDEC)
+    nome_en: Argentina — CPI (month, INDEC)
+    regiao: america_latina
+    unidade: "%"
+    frequencia: mensal
+    variacao: pp
+    decimais: 1
+    fonte: {tipo: datos_gob_ar, serie: 148.3_INIVELNAL_DICI_M_26, modo: percent_change}
+
+  - id: mx_taxa_objetivo
+    nome_pt: México — taxa objetivo (Banxico)
+    nome_en: Mexico — target rate (Banxico)
+    regiao: america_latina
+    unidade: "% a.a."
+    frequencia: reuniao
+    variacao: pp
+    decimais: 2
+    fonte: {tipo: banxico, serie: SF61745}
+    requer_chave: BANXICO_TOKEN
+    ativo: false            # decisão de 18/11/2026: só a chave do FRED será cadastrada
+
+  - id: mx_peso_fix
+    nome_pt: México — peso FIX (Banxico)
+    nome_en: Mexico — USD/MXN FIX (Banxico)
+    regiao: america_latina
+    unidade: "MXN"
+    frequencia: diaria
+    variacao: pct
+    decimais: 4
+    fonte: {tipo: banxico, serie: SF43718}
+    requer_chave: BANXICO_TOKEN
+    ativo: false            # decisão de 18/11/2026: só a chave do FRED será cadastrada
+
+  - id: cl_tpm
+    nome_pt: Chile — taxa de política monetária
+    nome_en: Chile — monetary policy rate
+    regiao: america_latina
+    unidade: "% a.a."
+    frequencia: reuniao
+    variacao: pp
+    decimais: 2
+    fonte: {tipo: bcentral_cl, serie: F022.TPM.TIN.D001.NO.Z.D}
+    requer_chave: BCENTRAL_USER
+    ativo: false            # decisão de 18/11/2026: só a chave do FRED será cadastrada
+
+  - id: cl_dolar_observado
+    nome_pt: Chile — dólar observado
+    nome_en: Chile — USD/CLP observed rate
+    regiao: america_latina
+    unidade: "CLP"
+    frequencia: diaria
+    variacao: pct
+    decimais: 2
+    fonte: {tipo: bcentral_cl, serie: F073.TCO.PRE.Z.D}
+    requer_chave: BCENTRAL_USER
+    ativo: false            # decisão de 18/11/2026: só a chave do FRED será cadastrada
+
+# Curva completa do Tesouro Direto (gráfico do painel)
+curva_tesouro:
+  arquivo_fonte: "https://www.tesourotransparente.gov.br/ckan/dataset/df56aa42-484a-4a59-8184-7676580c81e3/resource/796d2059-14e9-44e3-80c9-2d9e30b405c1/download/PrecoTaxaTesouroDireto.csv"
+  pagina_dataset: "https://www.tesourotransparente.gov.br/ckan/dataset/taxas-dos-titulos-ofertados-pelo-tesouro-direto"
+  titulos:
+    prefixado: "Tesouro Prefixado"
+    ipca: "Tesouro IPCA+"
+  taxa_usada: taxa_compra       # taxa de compra da manhã, a que o investidor obtém ao comprar

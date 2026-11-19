@@ -1,0 +1,27 @@
+# Segredos e credenciais: nunca versionar
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+credenciais*
+secrets*
+*.secret
+id_rsa*
+id_ed25519*
+
+# Arquivos locais e temporários
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+tmp/
+.cache/
+__pycache__/
+.venv/
+node_modules/
+
+# Configurações locais do Claude (podem conter permissões pessoais)
+.claude/settings.local.json
+.pytest_cache/

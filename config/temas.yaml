@@ -1,0 +1,136 @@
+# Temas monitorados e consultas de busca por idioma
+# As consultas são pontos de partida. A cada execução, o agente pode refinar os termos
+# para o noticiário do dia, mas não pode trocar as fontes nem o escopo.
+# Alterações neste arquivo são feitas apenas por pull request.
+
+temas:
+  - id: brasil-politica-monetaria
+    secao: economia_brasileira
+    peso: 3
+    consultas:
+      pt: ["Copom Selic", "Banco Central juros", "Boletim Focus expectativas"]
+      en: ["Brazil central bank Selic"]
+
+  - id: brasil-fiscal
+    secao: economia_brasileira
+    peso: 3
+    consultas:
+      pt: ["arcabouço fiscal", "resultado primário governo central", "Tesouro Nacional dívida pública", "pacote fiscal Congresso"]
+      en: ["Brazil fiscal deficit"]
+
+  - id: brasil-indicadores
+    secao: economia_brasileira
+    peso: 2
+    consultas:
+      pt: ["IBGE IPCA", "IBGE PIB", "IBGE desemprego PNAD", "produção industrial IBGE", "varejo IBGE"]
+
+  - id: brasil-mercados
+    secao: mercados
+    peso: 3
+    consultas:
+      pt: ["Ibovespa fechamento", "dólar fechamento real", "juros futuros DI"]
+
+  - id: brasil-politica
+    secao: politica
+    peso: 2
+    consultas:
+      pt: ["Planalto governo", "Congresso votação", "STF decisão economia"]
+
+  - id: eua-fed
+    secao: economia_internacional
+    peso: 3
+    consultas:
+      en: ["Federal Reserve interest rates", "FOMC minutes", "Fed officials inflation"]
+
+  - id: eua-indicadores
+    secao: economia_internacional
+    peso: 2
+    consultas:
+      en: ["US CPI inflation", "nonfarm payrolls", "US GDP BEA", "jobless claims", "retail sales US"]
+
+  - id: eua-mercados
+    secao: mercados
+    peso: 3
+    consultas:
+      en: ["Wall Street stocks close", "Treasury yields", "dollar index", "S&P 500 Nasdaq"]
+
+  - id: eua-politica
+    secao: politica
+    peso: 2
+    consultas:
+      en: ["White House tariffs", "Congress budget", "US Treasury Secretary"]
+
+  - id: europa-bce
+    secao: economia_internacional
+    peso: 3
+    consultas:
+      en: ["ECB interest rate decision", "euro zone inflation Eurostat", "Lagarde"]
+
+  - id: reino-unido
+    secao: economia_internacional
+    peso: 2
+    consultas:
+      en: ["Bank of England rates", "UK inflation ONS", "UK budget"]
+
+  - id: europa-politica
+    secao: politica
+    peso: 1
+    consultas:
+      en: ["European Commission", "EU trade"]
+
+  - id: china
+    secao: economia_internacional
+    peso: 3
+    consultas:
+      en: ["China economy NBS", "PBOC", "China exports", "China property"]
+      zh: ["国家统计局", "中国人民银行"]
+
+  - id: japao
+    secao: economia_internacional
+    peso: 2
+    consultas:
+      en: ["Bank of Japan", "yen", "Nikkei 225"]
+
+  - id: america-latina
+    secao: economia_internacional
+    peso: 2
+    consultas:
+      es: ["Banxico tasa de interés", "BCRA Argentina inflación", "Banco Central de Chile", "peso mexicano"]
+      en: ["Latin America markets"]
+
+  - id: emergentes
+    secao: economia_internacional
+    peso: 1
+    consultas:
+      en: ["emerging markets capital flows", "India RBI", "Turkey central bank", "South Africa rand"]
+
+  - id: commodities
+    secao: mercados
+    peso: 3
+    consultas:
+      en: ["oil prices Brent", "OPEC", "gold price", "iron ore price", "soybean prices"]
+
+  - id: geopolitica
+    secao: geopolitica
+    peso: 3
+    consultas:
+      en: ["sanctions", "trade war", "Middle East oil", "Ukraine Russia", "Taiwan"]
+      es: ["geopolítica"]
+
+  - id: empresas
+    secao: mercados
+    peso: 2
+    consultas:
+      en: ["earnings results", "IPO"]
+      pt: ["balanço trimestral", "resultado trimestral empresa B3"]
+
+relevancia:
+  # Critérios de pontuação usados na etapa 4 (triagem)
+  criterios:
+    - impacto em juros, câmbio, inflação ou crescimento
+    - impacto em bolsas, títulos ou commodities
+    - decisão ou dado oficial novo
+    - alcance (global > regional > setorial)
+    - relação com o Brasil
+    - novidade em relação ao relatório anterior
+  sem_cota_por_pais: true

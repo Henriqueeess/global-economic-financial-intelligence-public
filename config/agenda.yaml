@@ -1,0 +1,61 @@
+# Calendários de divulgação usados para montar a "Agenda econômica do dia".
+# status: a_validar = endereço ainda não testado neste ambiente; validado = testado em execução.
+# Horários de referência sempre convertidos para America/Sao_Paulo no relatório.
+
+calendarios:
+  - nome: IBGE — calendário de divulgações
+    regiao: Brasil
+    url: https://www.ibge.gov.br/calendario-de-divulgacoes.html
+    horario_habitual_local: "09:00"
+    status: a_validar
+  - nome: Banco Central do Brasil — agenda e Copom
+    regiao: Brasil
+    url: https://www.bcb.gov.br/
+    observacao: datas do Copom e publicação do Focus (segundas-feiras)
+    status: a_validar
+  - nome: Tesouro Nacional — calendário de leilões e publicações
+    regiao: Brasil
+    url: https://www.tesourotransparente.gov.br/
+    status: a_validar
+  - nome: BLS — release calendar
+    regiao: EUA
+    url: https://www.bls.gov/schedule/
+    horario_habitual_local: "08:30 America/New_York"
+    status: a_validar
+  - nome: BEA — release schedule
+    regiao: EUA
+    url: https://www.bea.gov/news/schedule
+    status: a_validar
+  - nome: Federal Reserve — FOMC calendar
+    regiao: EUA
+    url: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
+    status: a_validar
+  - nome: ECB — monetary policy meetings
+    regiao: Zona do euro
+    url: https://www.ecb.europa.eu/press/calendars/html/index.en.html
+    status: a_validar
+  - nome: Eurostat — release calendar
+    regiao: União Europeia
+    url: https://ec.europa.eu/eurostat/news/release-calendar
+    status: a_validar
+  - nome: Bank of England — upcoming MPC dates
+    regiao: Reino Unido
+    url: https://www.bankofengland.co.uk/monetary-policy/upcoming-mpc-dates
+    status: a_validar
+  - nome: ONS — release calendar
+    regiao: Reino Unido
+    url: https://www.ons.gov.uk/releasecalendar
+    status: a_validar
+  - nome: National Bureau of Statistics of China — release calendar
+    regiao: China
+    url: https://www.stats.gov.cn/english/
+    status: a_validar
+  - nome: Bank of Japan — monetary policy meetings
+    regiao: Japão
+    url: https://www.boj.or.jp/en/
+    status: a_validar
+
+regras:
+  - Eventos que ocorrem depois do horário da execução entram como "previstos", com horário em Brasília e consenso quando uma fonte aberta o informar.
+  - Nunca apresentar como resultado um dado ainda não divulgado.
+  - Em feriados brasileiros, o relatório é gerado normalmente e a agenda indica o feriado.

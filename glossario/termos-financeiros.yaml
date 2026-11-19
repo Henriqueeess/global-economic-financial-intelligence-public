@@ -1,0 +1,85 @@
+# Glossário de termos financeiros do English Learning Corner
+# A execução diária só pode acrescentar datas em "usado_em" e incluir termos novos.
+# Expressões usadas nos últimos 20 dias úteis não devem ser repetidas.
+
+termos:
+  - termo: Monetary Policy
+    definicao: Actions by a central bank to manage interest rates and money supply to reach its inflation and growth goals.
+    traducao: Política monetária
+    usado_em: ["2026-11-18"]
+  - termo: Fiscal Policy
+    definicao: Government decisions on spending and taxation.
+    traducao: Política fiscal
+    usado_em: ["2026-11-18"]
+  - termo: Inflation Expectations
+    definicao: What households, firms and markets believe inflation will be in the future.
+    traducao: Expectativas de inflação
+    usado_em: ["2026-11-18"]
+  - termo: Interest Rate Differential
+    definicao: The gap between interest rates in two countries, which drives currency and capital flows.
+    traducao: Diferencial de juros
+    usado_em: ["2026-11-18"]
+  - termo: Yield Curve
+    definicao: A line showing bond yields across maturities, from short-term to long-term.
+    traducao: Curva de juros
+    usado_em: ["2026-11-18"]
+  - termo: Treasury Yields
+    definicao: The return investors earn on U.S. government bonds.
+    traducao: Rendimento dos Treasuries (títulos do Tesouro americano)
+    usado_em: ["2026-11-18"]
+  - termo: Risk Appetite
+    definicao: Investors' willingness to buy riskier assets.
+    traducao: Apetite a risco
+    usado_em: ["2026-11-18"]
+  - termo: Risk-Off Environment
+    definicao: A period when investors sell risky assets and seek safe havens.
+    traducao: Ambiente de aversão a risco
+    usado_em: ["2026-11-18"]
+  - termo: Capital Flows
+    definicao: Movements of money across borders for investment.
+    traducao: Fluxos de capital
+    usado_em: ["2026-11-18"]
+  - termo: Emerging Markets
+    definicao: Developing economies with growing financial markets, such as Brazil, India or Mexico.
+    traducao: Mercados emergentes
+    usado_em: ["2026-11-18"]
+  - termo: Commodity Prices
+    definicao: Prices of raw materials such as oil, iron ore, soybeans and gold.
+    traducao: Preços das commodities
+    usado_em: ["2026-11-18"]
+  - termo: Economic Outlook
+    definicao: The expected path of the economy over the coming months or years.
+    traducao: Perspectiva econômica
+    usado_em: ["2026-11-18"]
+  - termo: Market Sentiment
+    definicao: The overall mood of investors toward a market or asset.
+    traducao: Sentimento de mercado
+    usado_em: ["2026-11-18"]
+  - termo: Corporate Earnings
+    definicao: Profits reported by companies, usually each quarter.
+    traducao: Resultados corporativos (lucros das empresas)
+    usado_em: ["2026-11-18"]
+  - termo: Gross Domestic Product (GDP)
+    definicao: The total value of goods and services produced in an economy over a period.
+    traducao: Produto Interno Bruto (PIB)
+    usado_em: ["2026-11-18"]
+  - termo: Hawkish
+    definicao: Favouring tighter monetary policy, such as higher interest rates, to fight inflation.
+    traducao: Postura dura / contracionista
+    usado_em: ["2026-11-19"]
+  - termo: Rate Hike
+    definicao: An increase in a central bank's policy interest rate.
+    traducao: Alta de juros
+    usado_em: ["2026-11-19"]
+  - termo: Oversubscribed
+    definicao: When demand for securities in an offering exceeds the amount available.
+    traducao: Demanda superior à oferta (sobresubscrita)
+    usado_em: ["2026-11-19"]
+  - termo: Currency Depreciation
+    definicao: A fall in a currency's value against another currency.
+    traducao: Depreciação cambial
+    usado_em: ["2026-11-19"]
+  - termo: Fiscal Adjustment
+    definicao: Measures to improve public finances by cutting spending or raising revenue.
+    traducao: Ajuste fiscal
+    usado_em: ["2026-11-19"]
