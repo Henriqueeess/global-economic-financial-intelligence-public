@@ -293,7 +293,7 @@ indicadores:
     decimais: 1
     fonte: {tipo: bls, serie: CUUR0000SA0, calculo: variacao_12m}
     requer_chave: BLS_API_KEY
-    ativo: false            # decisão de 18/11/2026: só a chave do FRED será cadastrada
+    ativo: true             # reativado em 19/11/2026: chaves cadastradas nos Secrets do GitHub
 
   - id: us_desemprego
     nome_pt: Taxa de desemprego
@@ -305,7 +305,7 @@ indicadores:
     decimais: 1
     fonte: {tipo: bls, serie: LNS14000000}
     requer_chave: BLS_API_KEY
-    ativo: false            # decisão de 18/11/2026: só a chave do FRED será cadastrada
+    ativo: true             # reativado em 19/11/2026: chaves cadastradas nos Secrets do GitHub
 
   # ---------------- Zona do euro ----------------
   - id: ez_eurusd
@@ -379,7 +379,7 @@ indicadores:
     decimais: 2
     fonte: {tipo: banxico, serie: SF61745}
     requer_chave: BANXICO_TOKEN
-    ativo: false            # decisão de 18/11/2026: só a chave do FRED será cadastrada
+    ativo: true             # reativado em 19/11/2026: chaves cadastradas nos Secrets do GitHub
 
   - id: mx_peso_fix
     nome_pt: México — peso FIX (Banxico)
@@ -391,7 +391,7 @@ indicadores:
     decimais: 4
     fonte: {tipo: banxico, serie: SF43718}
     requer_chave: BANXICO_TOKEN
-    ativo: false            # decisão de 18/11/2026: só a chave do FRED será cadastrada
+    ativo: true             # reativado em 19/11/2026: chaves cadastradas nos Secrets do GitHub
 
   - id: cl_tpm
     nome_pt: Chile — taxa de política monetária
@@ -403,7 +403,7 @@ indicadores:
     decimais: 2
     fonte: {tipo: bcentral_cl, serie: F022.TPM.TIN.D001.NO.Z.D}
     requer_chave: BCENTRAL_USER
-    ativo: false            # decisão de 18/11/2026: só a chave do FRED será cadastrada
+    ativo: true             # reativado em 19/11/2026: chaves cadastradas nos Secrets do GitHub
 
   - id: cl_dolar_observado
     nome_pt: Chile — dólar observado
@@ -415,7 +415,7 @@ indicadores:
     decimais: 2
     fonte: {tipo: bcentral_cl, serie: F073.TCO.PRE.Z.D}
     requer_chave: BCENTRAL_USER
-    ativo: false            # decisão de 18/11/2026: só a chave do FRED será cadastrada
+    ativo: true             # reativado em 19/11/2026: chaves cadastradas nos Secrets do GitHub
 
 # Curva completa do Tesouro Direto (gráfico do painel)
 curva_tesouro:
