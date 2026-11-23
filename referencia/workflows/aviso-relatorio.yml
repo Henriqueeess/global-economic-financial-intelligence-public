@@ -1,5 +1,10 @@
 # Aviso de relatório novo
-# Quando uma execução grava um relatório na main, esta automação abre uma issue
+# DESLIGADO desde 23/11/2026, a pedido do responsável: o briefing chega só pelo
+# e-mail em HTML do Apps Script (integracoes/google-drive/Email.gs). O gatilho por
+# push foi retirado; só o disparo manual (Run workflow) continua possível.
+# Para religar, devolver o bloco "push" em "on:" (ver histórico do Git).
+#
+# Como funcionava: quando uma execução gravava um relatório na main, esta automação abre uma issue
 # com a International Edition completa no corpo (formato de newsletter) e o link
 # da edição em português. O GitHub envia o e-mail de
 # notificação: a issue é atribuída ao dono do repositório, que recebe o aviso
@@ -12,11 +17,6 @@
 name: Aviso de relatório novo
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "relatorios/**/relatorio-pt.md"
-      - "relatorios/**/relatorio-en.md"
   workflow_dispatch:
     inputs:
       pasta:

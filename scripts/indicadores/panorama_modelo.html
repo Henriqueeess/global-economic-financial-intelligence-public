@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<base target="_blank">
+<title>Panorama Econômico</title>
+<!-- Modelo do Panorama Econômico. scripts/gerar_panorama.py troca o marcador de dados pelo JSON do dia.
+     Página única: sem bibliotecas externas, sem rede. Textos do briefing chegam já escapados
+     (campos *_html) ou são inseridos como texto (função esc). -->
+<style>
+/* Coluna única de leitura; números no topo; curvas e termômetros lado a lado no meio.
+   Tokens iguais aos do dashboard de conjuntura (dashboard_modelo.html). */
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #6f6d68;
+  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,0.10);
+  --s1: #2a78d6; --cold: #2a78d6; --hot: #e34948; --mid: #f0efec;
+  --accent: #0b2545; --up: #b4382f; --down: #1f6fbf; --note-bg: #eef3fa; --warn-bg: #fbf1e6; --warn: #8a4b0f;
+  --bad-bg: #fde8e8; --bad: #8a1c1c;
+  --f-text: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-num: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #a3a199;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+    --s1: #3987e5; --cold: #3987e5; --hot: #e66767; --mid: #383835;
+    --accent: #9ec5f4; --up: #ef8a80; --down: #7fb3ef; --note-bg: #16202c; --warn-bg: #2a1f12; --warn: #e7b37a;
+    --bad-bg: #3a1616; --bad: #f2a5a5;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #a3a199;
+  --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+  --s1: #3987e5; --cold: #3987e5; --hot: #e66767; --mid: #383835;
+  --accent: #9ec5f4; --up: #ef8a80; --down: #7fb3ef; --note-bg: #16202c; --warn-bg: #2a1f12; --warn: #e7b37a;
+  --bad-bg: #3a1616; --bad: #f2a5a5;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body { background: var(--page); color: var(--ink); font: 15px/1.55 var(--f-text); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 20px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--s1); outline-offset: 2px; }
+.num { font-family: var(--f-num); font-variant-numeric: tabular-nums; }
+h1 { font-size: 26px; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+h2 { font-size: 17px; margin: 0; letter-spacing: -0.005em; text-wrap: balance; }
+.eyebrow { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
+.sub { color: var(--ink-2); font-size: 13.5px; }
+.alerta { background: var(--bad-bg); color: var(--bad); border-radius: 8px; padding: 10px 14px; font-weight: 600; font-size: 14px; }
+header.top { display: grid; gap: 10px; }
+.topline { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.seg button { border: 0; background: none; color: var(--ink-2); font: inherit; font-size: 12.5px; font-weight: 600; padding: 4px 12px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--page); }
+nav.jump { display: flex; flex-wrap: wrap; gap: 6px; }
+nav.jump a { font-size: 12.5px; text-decoration: none; color: var(--ink-2); border: 1px solid var(--border); border-radius: 999px; padding: 3px 10px; background: var(--surface); }
+nav.jump a:hover { color: var(--ink); border-color: var(--axis); }
+section { display: grid; gap: 12px; min-width: 0; }
+.sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; border-bottom: 1px solid var(--grid); padding-bottom: 6px; }
+.tag { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; border-radius: 4px; padding: 2px 6px; white-space: nowrap; background: var(--mid); color: var(--ink-2); }
+.tag.analise { background: var(--note-bg); color: var(--accent); }
+.vazio { color: var(--muted); font-size: 13.5px; }
+
+ol.minuto { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; counter-reset: m; }
+ol.minuto li { display: grid; grid-template-columns: 22px 1fr; gap: 10px; counter-increment: m; max-width: 80ch; }
+ol.minuto li::before { content: counter(m); font-family: var(--f-num); font-size: 12px; color: var(--muted); padding-top: 2px; }
+ol.minuto b { font-weight: 650; }
+
+.tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1px; background: var(--grid); border: 1px solid var(--grid); border-radius: 10px; overflow: hidden; }
+.tile { background: var(--surface); padding: 12px 14px; display: grid; gap: 2px; align-content: start; min-width: 0; }
+.tile .lab { font-size: 12.5px; color: var(--ink-2); }
+.tile .val { font-size: 21px; font-weight: 600; overflow-wrap: anywhere; }
+.tile .chg { font-size: 12.5px; }
+.tile .meta { font-size: 11.5px; color: var(--muted); }
+.up { color: var(--up); } .down { color: var(--down); } .flat { color: var(--muted); }
+.pct { display: inline-block; font-size: 11px; border-radius: 3px; padding: 0 4px; margin-left: 4px; color: var(--ink); }
+.subhead { font-size: 13px; font-weight: 600; color: var(--ink-2); margin-top: 4px; }
+table.t { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+table.t th, table.t td { text-align: left; padding: 7px 10px 7px 0; border-bottom: 1px solid var(--grid); vertical-align: top; }
+table.t th { font-weight: 600; color: var(--muted); font-size: 12px; }
+table.t td.h { font-family: var(--f-num); white-space: nowrap; color: var(--ink-2); }
+table.t tr.hi td { background: var(--note-bg); }
+.ctry { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.scroll { overflow-x: auto; }
+
+.cols { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 28px; }
+.chart { width: 100%; height: auto; display: block; }
+.chart text { fill: var(--ink-2); font-size: 11px; font-family: var(--f-text); }
+.chart .tick { fill: var(--muted); }
+.legend { display: flex; gap: 14px; font-size: 12px; color: var(--ink-2); flex-wrap: wrap; }
+.legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+
+.thermo { display: grid; gap: 14px; }
+.tblock { display: grid; gap: 6px; }
+.trow { display: grid; grid-template-columns: minmax(0, 1fr) 120px 40px; gap: 10px; align-items: center; font-size: 13px; }
+.trow .nm { overflow-wrap: anywhere; }
+.trow .nm small { color: var(--muted); font-family: var(--f-num); margin-left: 4px; }
+.bar { position: relative; height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--cold), var(--mid) 50%, var(--hot)); opacity: 0.85; }
+.bar .now { position: absolute; top: -4px; width: 3px; height: 16px; background: var(--ink); border-radius: 2px; transform: translateX(-1px); }
+.bar .ago { position: absolute; top: -2px; width: 8px; height: 12px; border: 1.5px solid var(--ink-2); border-radius: 3px; transform: translateX(-4px); }
+.trow .p { text-align: right; font-family: var(--f-num); font-size: 12.5px; }
+
+.grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.cb { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; background: var(--surface); display: grid; gap: 8px; align-content: start; min-width: 0; }
+.cb .big { font-size: 22px; font-weight: 600; }
+.cb dl { margin: 0; display: grid; gap: 2px; font-size: 13px; }
+.cb dd + dt { margin-top: 6px; }
+.cb dt { color: var(--muted); } .cb dd { margin: 0; }
+
+.leitura { display: grid; gap: 16px; }
+.item { display: grid; gap: 4px; max-width: 82ch; }
+.item h3 { font-size: 15px; margin: 0; text-wrap: balance; }
+.item p { margin: 0; }
+.src { font-size: 12.5px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+.src a { color: var(--ink-2); }
+
+.glos { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px 24px; }
+.glos div { min-width: 0; }
+.glos dt { font-weight: 650; font-size: 14px; }
+.glos dd { margin: 2px 0 0; font-size: 13.5px; color: var(--ink-2); }
+ul.fora { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 13.5px; color: var(--ink-2); max-width: 85ch; }
+footer { font-size: 12px; color: var(--muted); max-width: 90ch; display: grid; gap: 4px; }
+@media (max-width: 860px) { .cols { grid-template-columns: minmax(0, 1fr); } .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .trow { grid-template-columns: minmax(0, 1fr) 84px 34px; } h1 { font-size: 22px; } }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+const DADOS = /*__DADOS__*/null;
+const LANG_INICIAL = "pt";
+const LANG_FIXO = "";  // o Apps Script preenche com "pt" ou "en" quando a página é aberta com ?ed=
+
+const TXT = {
+  pt: {
+    loc: "pt-BR", nome: "Panorama Econômico", lingua: "Idioma",
+    meses: ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"],
+    dias: ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"],
+    sub: (d) => `Briefing de ${d.exec} · página gerada em ${d.gerado} · horário de Brasília`,
+    incompleto: "Briefing INCOMPLETO: a verificação ou a paridade não foi concluída. Os textos abaixo podem ter lacunas.",
+    nav: ["Em 1 minuto", "Números", "Curvas", "Termômetros", "Bancos centrais", "Agenda", "Leitura do dia", "Entenda os termos", "Ficou de fora"],
+    minuto: "Em 1 minuto", minutoTag: "Do resumo executivo do briefing",
+    numeros: "Números do dia", numerosSub: "Variação em 7 dias corridos (mensais: contra a leitura anterior) · selo = percentil desde ",
+    oficiais: "Dados oficiais, com link para a API de origem", imprensa: "Mercados, segundo reportagens verificadas no briefing",
+    contra: "contra", desat: "desatualizado",
+    curvas: "Curvas de juros do Tesouro", curvasSub: (a, b) => `Taxa de compra dos títulos sem cupom, ${a} contra ${b}. Rótulo = variação em pontos-base (bps).`,
+    pre: "Prefixado (% a.a.)", ipca: "IPCA+ (juro real, % a.a.)", semCurva: "Curva do Tesouro indisponível hoje.",
+    termo: "Termômetros de juros e inflação", termoSub: (a) => `Onde cada indicador está no próprio histórico desde ${a} (0 = mínimo, 100 = máximo). Traço = hoje, contorno = um ano antes.`,
+    pctA: "percentil", ago: "um ano antes",
+    bcs: "Bancos centrais", bcsSub: "Taxa vigente e expectativas oficiais", fontes: "Fontes:",
+    agenda: "Agenda de hoje", agendaSub: "Do briefing · em destaque o que mexe com juros e inflação",
+    agCab: ["Hora", "País", "Evento", "Consenso"], semAgenda: "O briefing não trouxe agenda hoje.",
+    leitura: "Leitura do dia", leituraSub: "Do briefing, com o tipo de fonte e o link original", andamento: "Em andamento",
+    entenda: "Entenda os termos de hoje", entendaTag: "Explicação",
+    fora: "Ficou de fora e por quê", foraSub: "Itens que o briefing não conseguiu confirmar em fonte aberta", nenhum: "Nenhum.",
+    rodape: "Leitura de conjuntura para acompanhar o mercado. Não projeta câmbio, juros de mercado nem preço de ativos, e não é recomendação. Números oficiais vêm das APIs listadas em config/indicadores.yaml; os demais, das reportagens verificadas no briefing do dia.",
+    origem: (p) => `Execução: ${p}.`,
+    un: { "% a.a.": "%", "% a.d.": "% a.d.", "p.p.": " p.p.", "%": "%" }, pp: " p.p."
+  },
+  en: {
+    loc: "en-US", nome: "Economic Overview", lingua: "Language",
+    meses: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    dias: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+    sub: (d) => `Briefing of ${d.exec} · page generated ${d.gerado} · Brasília time`,
+    incompleto: "INCOMPLETE briefing: verification or parity was not completed. The text below may have gaps.",
+    nav: ["In one minute", "Numbers", "Yield curves", "Gauges", "Central banks", "Calendar", "The day's reading", "Key terms", "Left out"],
+    minuto: "In one minute", minutoTag: "From the briefing's executive summary",
+    numeros: "The day's numbers", numerosSub: "Change over 7 calendar days (monthly: against the previous reading) · badge = percentile since ",
+    oficiais: "Official data, linked to the source API", imprensa: "Markets, according to news reports verified in the briefing",
+    contra: "vs", desat: "stale",
+    curvas: "Brazilian Treasury yield curves", curvasSub: (a, b) => `Bid rates of zero-coupon bonds, ${a} against ${b}. Labels = change in basis points (bps).`,
+    pre: "Nominal (% a year)", ipca: "IPCA+ (real rate, % a year)", semCurva: "Treasury curve not available today.",
+    termo: "Rates and inflation gauges", termoSub: (a) => `Where each indicator sits in its own history since ${a} (0 = lowest, 100 = highest). Bar = today, outline = one year earlier.`,
+    pctA: "percentile", ago: "one year earlier",
+    bcs: "Central banks", bcsSub: "Current rate and official expectations", fontes: "Sources:",
+    agenda: "Today's calendar", agendaSub: "From the briefing · highlighted: what moves rates and inflation",
+    agCab: ["Time", "Country", "Event", "Consensus"], semAgenda: "The briefing had no calendar today.",
+    leitura: "The day's reading", leituraSub: "From the briefing, with source type and original link", andamento: "Ongoing",
+    entenda: "Today's key terms", entendaTag: "Explainer",
+    fora: "Left out, and why", foraSub: "Items the briefing could not confirm in an open source", nenhum: "None.",
+    rodape: "A macro overview to follow the markets. It does not forecast exchange rates, market rates or asset prices, and it is not a recommendation. Official numbers come from the APIs listed in config/indicadores.yaml; the rest from news reports verified in the day's briefing.",
+    origem: (p) => `Run: ${p}.`,
+    un: { "% a.a.": "%", "% a.d.": "% p.d.", "p.p.": " pp", "%": "%" }, pp: " pp"
+  }
+};
+const IDS = ["minuto", "numeros", "curvas", "termometros", "bcs", "agenda", "leitura", "entenda", "fora"];
+
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function urlOk(u) { return /^https?:\/\/[^\s"'<>]+$/.test(u || "") ? u : ""; }
+function n(v, d, lg) { return Number(v).toLocaleString(TXT[lg].loc, { minimumFractionDigits: d, maximumFractionDigits: d }); }
+function dia(iso, lg, mensal) {
+  const [y, m, d] = iso.split("-").map(Number);
+  const T = TXT[lg];
+  if (mensal) return lg === "pt" ? `${T.meses[m - 1]}/${String(y).slice(2)}` : `${T.meses[m - 1]} ${String(y).slice(2)}`;
+  return lg === "pt" ? `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}` : `${d} ${T.meses[m - 1]}`;
+}
+function valor(l, lg) {
+  const u = l.unidade || "";
+  if (["R$", "US$"].includes(u)) return u === "US$" ? n(l.valor, l.decimais, lg) : `R$ ${n(l.valor, l.decimais, lg)}`;
+  const suf = TXT[lg].un[u] !== undefined ? TXT[lg].un[u] : (u ? " " + u : "");
+  return n(l.valor, l.decimais, lg) + suf;
+}
+function variacao(l, lg) {
+  if (l.var == null) return { txt: "", cls: "flat" };
+  const v = l.var, r = Math.abs(v) < 0.005 ? 0 : v;
+  const cls = r > 0 ? "up" : r < 0 ? "down" : "flat";
+  const seta = r > 0 ? "▲" : r < 0 ? "▼" : "=";
+  const sinal = r > 0 ? "+" : r < 0 ? "−" : "±";
+  return { txt: `${seta} ${sinal}${n(Math.abs(v), 2, lg)}${l.tipo_var === "pct" ? "%" : TXT[lg].pp}`, cls };
+}
+function heat(p) {
+  const cs = getComputedStyle(document.documentElement);
+  const c = (p < 50 ? cs.getPropertyValue("--cold") : cs.getPropertyValue("--hot")).trim();
+  return `color-mix(in srgb, ${c} ${Math.round(Math.abs(p - 50) / 50 * 45)}%, transparent)`;
+}
+function secHead(titulo, direita, tag) {
+  return `<div class="sec-head"><h2>${esc(titulo)}</h2>${direita ? (tag ? `<span class="tag${tag === "analise" ? " analise" : ""}">${esc(direita)}</span>` : `<span class="sub">${esc(direita)}</span>`) : ""}</div>`;
+}
+
+function curvaSvg(pts, lg, rot) {
+  if (pts.length < 2) return "";
+  const W = 520, H = 190, L = 44, R = 18, Tp = 22, B = 30;
+  const all = pts.flatMap(p => p.b == null ? [p.a] : [p.a, p.b]);
+  const x0 = Math.min(...pts.map(p => p.prazo)), x1 = Math.max(...pts.map(p => p.prazo));
+  let y0 = Math.floor(Math.min(...all) * 4) / 4, y1 = Math.ceil(Math.max(...all) * 4) / 4;
+  if (y1 - y0 < 0.5) { y0 -= 0.25; y1 += 0.25; }
+  const X = v => L + (v - x0) / (x1 - x0 || 1) * (W - L - R);
+  const Y = v => Tp + (y1 - v) / (y1 - y0) * (H - Tp - B);
+  const step = (y1 - y0) > 1.2 ? 0.5 : 0.25;
+  let s = "";
+  for (let v = y0; v <= y1 + 1e-9; v += step) {
+    s += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--grid)" stroke-width="1"/>`;
+    s += `<text class="tick" x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${n(v, 2, lg)}</text>`;
+  }
+  const comB = pts.filter(p => p.b != null);
+  const path = (arr, k) => arr.map((p, i) => `${i ? "L" : "M"}${X(p.prazo).toFixed(1)},${Y(p[k]).toFixed(1)}`).join("");
+  if (comB.length > 1) s += `<path d="${path(comB, "b")}" fill="none" stroke="var(--axis)" stroke-width="2" stroke-dasharray="4 3"/>`;
+  s += `<path d="${path(pts, "a")}" fill="none" stroke="var(--s1)" stroke-width="2.2"/>`;
+  let ultimoX = -99;
+  pts.forEach(p => {
+    s += `<circle cx="${X(p.prazo)}" cy="${Y(p.a)}" r="3.2" fill="var(--s1)"/>`;
+    if (p.b != null) {
+      const bps = Math.round((p.a - p.b) * 100);
+      const col = bps > 0 ? "var(--up)" : bps < 0 ? "var(--down)" : "var(--muted)";
+      s += `<text x="${X(p.prazo)}" y="${Y(Math.max(p.a, p.b)) - 8}" text-anchor="middle" style="fill:${col};font-weight:600">${bps > 0 ? "+" : bps < 0 ? "−" : "±"}${Math.abs(bps)}</text>`;
+    }
+    if (X(p.prazo) - ultimoX >= 34) {  // rótulos do eixo não se sobrepõem
+      const [y, m] = p.venc.split("-").map(Number);
+      const r = rot === "mes" ? (lg === "pt" ? `${TXT.pt.meses[m - 1]}/${String(y).slice(2)}` : `${TXT.en.meses[m - 1]} ${String(y).slice(2)}`) : String(y);
+      s += `<text class="tick" x="${X(p.prazo)}" y="${H - 10}" text-anchor="middle">${r}</text>`;
+      ultimoX = X(p.prazo);
+    }
+  });
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">${s}</svg>`;
+}
+
+function render(lg) {
+  const T = TXT[lg], E = DADOS.edicoes[lg];
+  const h = [];
+  const [y, m, d] = DADOS.dia.split("-").map(Number);
+  const wd = T.dias[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
+  const dataLonga = lg === "pt" ? `${wd}, ${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}` : `${wd}, ${d} ${T.meses[m - 1]} ${y}`;
+  const exec = DADOS.execucao.slice(11, 13) + (lg === "pt" ? "h" : ":") + DADOS.execucao.slice(13, 15);
+  const g = DADOS.gerado.slice(11, 16).replace(":", lg === "pt" ? "h" : ":");
+
+  if (DADOS.incompleto) h.push(`<div class="alerta">${esc(T.incompleto)}</div>`);
+  h.push(`<header class="top"><div class="topline"><div class="eyebrow">Global Economic &amp; Financial Intelligence</div>
+    <div class="seg" role="group" aria-label="${esc(T.lingua)}"><button type="button" data-set="pt" aria-pressed="${lg === "pt"}">PT</button><button type="button" data-set="en" aria-pressed="${lg === "en"}">EN</button></div></div>
+    <h1>${esc(T.nome)} · ${esc(dataLonga)}</h1>
+    <div class="sub">${esc(T.sub({ exec: `${dia(DADOS.dia, lg)} ${exec}`, gerado: `${dia(DADOS.gerado.slice(0, 10), lg)} ${g}` }))}</div>
+    <nav class="jump">${IDS.map((id, i) => `<a href="#${id}" target="_self">${esc(T.nav[i])}</a>`).join("")}</nav></header>`);
+
+  // Em 1 minuto
+  h.push(`<section id="minuto">${secHead(T.minuto, T.minutoTag, true)}`);
+  h.push(E.resumo_html.length ? `<ol class="minuto">${E.resumo_html.map(t => `<li><span>${t}</span></li>`).join("")}</ol>` : `<p class="vazio">${esc(T.nenhum)}</p>`);
+  h.push(`</section>`);
+
+  // Números
+  h.push(`<section id="numeros">${secHead(T.numeros, T.numerosSub + DADOS.desde)}<div class="subhead">${esc(T.oficiais)}</div><div class="tiles">`);
+  DADOS.cartoes.forEach(c => {
+    const v = variacao(c, lg);
+    const pill = c.pct != null ? `<span class="pct num" style="background:${heat(c.pct)}" title="${esc(T.pctA)}">p${Math.round(c.pct)}</span>` : "";
+    const ref = c.mensal ? `${dia(c.data, lg, true)} · ${T.contra} ${dia(c.anterior_data || c.data, lg, true)}` : dia(c.data, lg);
+    const link = urlOk(c.url) ? `<a href="${esc(c.url)}">${esc(ref)}</a>` : esc(ref);
+    h.push(`<div class="tile"><span class="lab">${esc(c[lg])}</span><span class="val num">${esc(valor(c, lg))}</span><span class="chg num ${v.cls}">${esc(v.txt)}${pill}</span><span class="meta">${link}${c.desatualizado ? " · " + esc(T.desat) : ""}</span></div>`);
+  });
+  h.push(`</div>`);
+  if (E.mercados.linhas.length) {
+    h.push(`<div class="subhead">${esc(T.imprensa)}</div><div class="scroll"><table class="t"><thead><tr>${E.mercados.cab.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>`);
+    E.mercados.linhas.forEach(l => h.push(`<tr>${l.map((c, i) => `<td${i === 1 || i === 2 ? ' class="num"' : ""}>${esc(c)}</td>`).join("")}</tr>`));
+    h.push(`</tbody></table></div>`);
+  }
+  h.push(`</section>`);
+
+  // Curvas e termômetros
+  h.push(`<div class="cols"><section id="curvas">`);
+  const C = DADOS.curvas;
+  if (C) {
+    h.push(`${secHead(T.curvas, "Tesouro Direto", true)}<div class="sub">${esc(C.data_b ? T.curvasSub(dia(C.data_a, lg), dia(C.data_b, lg)) : "")}</div>
+      <div class="legend"><span><i style="background:var(--s1)"></i>${esc(dia(C.data_a, lg))}</span>${C.data_b ? `<span><i style="background:var(--axis)"></i>${esc(dia(C.data_b, lg))}</span>` : ""}</div>
+      <div class="subhead">${esc(T.pre)}</div>${curvaSvg(C.prefixado, lg, "mes")}<div class="subhead">${esc(T.ipca)}</div>${curvaSvg(C.ipca, lg, "ano")}`);
+  } else {
+    h.push(`${secHead(T.curvas, "Tesouro Direto", true)}<p class="vazio">${esc(T.semCurva)}</p>`);
+  }
+  h.push(`</section><section id="termometros">${secHead(T.termo, lg === "pt" ? "Conjuntura" : "Macro", true)}<div class="sub">${esc(T.termoSub(DADOS.desde))}</div><div class="thermo">`);
+  const blocos = [];
+  DADOS.termometros.forEach(t => { let b = blocos.find(x => x.nome === t["bloco_" + lg]); if (!b) blocos.push(b = { nome: t["bloco_" + lg], itens: [] }); b.itens.push(t); });
+  blocos.forEach(b => {
+    h.push(`<div class="tblock"><div class="eyebrow">${esc(b.nome)}</div>`);
+    b.itens.forEach(t => {
+      const v = valor(t, lg);
+      const aria = `${t[lg]}: ${T.pctA} ${Math.round(t.pct)}` + (t.pct_1a != null ? `, ${T.ago} ${Math.round(t.pct_1a)}` : "");
+      h.push(`<div class="trow"><span class="nm">${esc(t[lg])}<small>${esc(v)}</small></span><span class="bar" role="img" aria-label="${esc(aria)}">${t.pct_1a != null ? `<span class="ago" style="left:${t.pct_1a}%"></span>` : ""}<span class="now" style="left:${t.pct}%"></span></span><span class="p">${Math.round(t.pct)}</span></div>`);
+    });
+    h.push(`</div>`);
+  });
+  h.push(`</div></section></div>`);
+
+  // Bancos centrais
+  h.push(`<section id="bcs">${secHead(T.bcs, T.bcsSub)}<div class="grid3">`);
+  DADOS.bancos.forEach(b => {
+    const p = b.principal;
+    const fontes = [p, ...b.linhas].filter(l => urlOk(l.url));
+    const vistos = new Set();
+    h.push(`<div class="cb"><div class="eyebrow">${esc(b[lg])}</div><div class="big num">${esc(valor(p, lg))}</div><div class="sub">${esc(p[lg])} · ${esc(dia(p.data, lg))}</div><dl>`);
+    b.linhas.forEach(l => {
+      const ref = dia(l.data, lg, l.mensal);
+      h.push(`<dt>${esc(l[lg])}</dt><dd class="num">${esc(valor(l, lg))} (${esc(ref)})${l.pct != null ? ` · p${Math.round(l.pct)}` : ""}</dd>`);
+    });
+    h.push(`</dl><div class="src">${esc(T.fontes)} ${fontes.filter(l => !vistos.has(l.url) && vistos.add(l.url)).map(l => `<a href="${esc(l.url)}">${esc(new URL(l.url).hostname.replace(/^www\./, ""))}</a>`).join(" ")}</div></div>`);
+  });
+  h.push(`</div></section>`);
+
+  // Agenda
+  h.push(`<section id="agenda">${secHead(T.agenda, T.agendaSub)}`);
+  if (E.agenda.length) {
+    const comConsenso = E.agenda.some(a => a.consenso && !/^(n\/d|n\/a|—|-)$/i.test(a.consenso));
+    h.push(`<div class="scroll"><table class="t"><thead><tr>${T.agCab.slice(0, comConsenso ? 4 : 3).map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>`);
+    E.agenda.forEach(a => h.push(`<tr${a.destaque ? ' class="hi"' : ""}><td class="h">${esc(a.hora)}</td><td class="ctry">${esc(a.pais)}</td><td>${esc(a.evento)}</td>${comConsenso ? `<td class="num">${esc(a.consenso)}</td>` : ""}</tr>`));
+    h.push(`</tbody></table></div>`);
+  } else h.push(`<p class="vazio">${esc(T.semAgenda)}</p>`);
+  h.push(`</section>`);
+
+  // Leitura do dia
+  h.push(`<section id="leitura">${secHead(T.leitura, T.leituraSub)}<div class="leitura">`);
+  E.itens.forEach(it => {
+    const link = urlOk(it.link);
+    h.push(`<div class="item"><div class="eyebrow">${esc(it.secao)}${it.andamento ? " · " + esc(T.andamento) : ""}</div><h3>${esc(it.titulo)}</h3><p>${it.texto_html}</p>
+      <div class="src">${it.tipo ? `<span class="tag">${esc(it.tipo)}</span>` : ""}${link ? `<a href="${esc(link)}">${esc(it.veiculo || new URL(link).hostname)}${it.data ? ", " + esc(it.data) : ""}</a>` : ""}</div></div>`);
+  });
+  h.push(`</div></section>`);
+
+  // Glossário
+  h.push(`<section id="entenda">${secHead(T.entenda, T.entendaTag, "analise")}<dl class="glos">${E.glossario.map(g => `<div><dt>${esc(g.termo)}</dt><dd>${esc(g.texto)}</dd></div>`).join("")}</dl></section>`);
+
+  // Ficou de fora
+  h.push(`<section id="fora">${secHead(T.fora, T.foraSub)}`);
+  h.push(E.nao_confirmados_html.length ? `<ul class="fora">${E.nao_confirmados_html.map(t => `<li>${t}</li>`).join("")}</ul>` : `<p class="vazio">${esc(T.nenhum)}</p>`);
+  h.push(`</section><footer><span>${esc(T.rodape)}</span><span>${esc(T.origem(DADOS.pasta))}</span></footer>`);
+
+  const app = document.getElementById("app");
+  app.innerHTML = h.join("");
+  app.lang = lg === "pt" ? "pt-BR" : "en";
+  document.documentElement.lang = app.lang;
+  document.title = `${T.nome} ${dia(DADOS.dia, lg)}`;
+  app.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
+    try { localStorage.setItem("panorama-lang", b.dataset.set); } catch (e) {}
+    render(b.dataset.set);
+  }));
+}
+
+let inicial = LANG_INICIAL;
+try { inicial = new URLSearchParams(location.search).get("ed") || localStorage.getItem("panorama-lang") || LANG_INICIAL; } catch (e) {}
+if (location.hash === "#en" || location.hash === "#pt") inicial = location.hash.slice(1);
+if (LANG_FIXO) inicial = LANG_FIXO;
+render(inicial === "en" ? "en" : "pt");
+</script>
+</body>
+</html>

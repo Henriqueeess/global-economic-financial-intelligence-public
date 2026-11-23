@@ -32,7 +32,7 @@ Três execuções manuais foram aprovadas em 18/11/2026, e o agendamento foi ati
 - Tarefa agendada do Claude na nuvem, criando uma sessão nova a cada disparo no ambiente `global-economic-financial-intelligence`.
 - Todos os dias, inclusive sábados e domingos, às 07h30 (America/Sao_Paulo). Decisão do responsável em 18/11/2026, substituindo o plano original de segunda a sexta.
 - Expressão: `CRON_TZ=America/Sao_Paulo 30 7 * * *` (na plataforma: `30 10 * * *` em UTC, já que São Paulo não tem horário de verão).
-- Cada disparo grava `relatorios/AAAA/MM/AAAA-MM-DD_HHMM/` na `main`, e a automação do GitHub abre a issue que envia a International Edition por e-mail.
+- Cada disparo grava `relatorios/AAAA/MM/AAAA-MM-DD_HHMM/` na `main`, e o Apps Script do responsável envia a edição em português por e-mail no Gmail (ver "E-mail diário em HTML").
 - Enquanto as chaves gratuitas (FRED, BEA, BLS, Banxico, BCentral Chile) não estiverem no ambiente, essas APIs são registradas como `api_falha` no log e os dados são buscados nas páginas oficiais.
 - Sem conectores externos.
 - O início pode atrasar alguns minutos em horários de pico da plataforma.
@@ -44,7 +44,9 @@ Três execuções manuais foram aprovadas em 18/11/2026, e o agendamento foi ati
 - Para rodar à mão: **Actions → Coleta de indicadores → Run workflow** (marque "backfill" para rebuscar todo o histórico).
 - Chaves gratuitas opcionais (FRED, BLS, Banxico, BC do Chile): **Settings → Secrets and variables → Actions → New repository secret**, com os nomes `FRED_API_KEY`, `BLS_API_KEY`, `BANXICO_TOKEN`, `BCENTRAL_USER` e `BCENTRAL_PASS`. Na coleta seguinte, os indicadores correspondentes saem de "Fora do painel hoje".
 
-## Aviso por e-mail
+## Aviso por issue do GitHub (desligado em 23/11/2026)
+
+Desligado a pedido do responsável em 23/11/2026: o briefing chega só pelo e-mail do Gmail (seção seguinte). O workflow continua no repositório, sem o gatilho por push, e só roda à mão. Para religar, devolver o bloco `push` em `on:` de `.github/workflows/aviso-relatorio.yml`. Registro de como funcionava:
 
 Decisão de 18/11/2026: o aviso de cada relatório chega por e-mail via notificação do GitHub, sem senhas e sem dar ao agente capacidade de enviar e-mails.
 
@@ -63,7 +65,7 @@ Configuração única, feita pelo responsável no GitHub:
 
 ## E-mail diário em HTML (Gmail)
 
-Decisão de 19/11/2026: a edição em português chega como e-mail formatado (resumo no topo, notícias em cartões, botão "Ler na fonte" em cada uma), enviado pelo mesmo Google Apps Script da cópia no Drive, até cerca de 15 minutos depois de o relatório ser gravado. O agente continua sem capacidade de enviar e-mails: quem envia é o script, na conta Google do responsável, sempre para o próprio responsável. Instalação: seção "E-mail diário" de [`integracoes/google-drive/README.md`](../integracoes/google-drive/README.md). O aviso por issue do GitHub, acima, continua ativo até o responsável decidir desligá-lo.
+Decisão de 19/11/2026: a edição em português chega como e-mail formatado (resumo no topo, notícias em cartões, botão "Ler na fonte" em cada uma), enviado pelo mesmo Google Apps Script da cópia no Drive, até cerca de 15 minutos depois de o relatório ser gravado. O agente continua sem capacidade de enviar e-mails: quem envia é o script, na conta Google do responsável, sempre para o próprio responsável. Instalação: seção "E-mail diário" de [`integracoes/google-drive/README.md`](../integracoes/google-drive/README.md). É o único aviso por e-mail desde 23/11/2026, quando o aviso por issue do GitHub foi desligado.
 
 ## Cópia no Google Drive (NotebookLM)
 
@@ -79,7 +81,7 @@ Fontes, temas, parâmetros, instruções e modelos mudam apenas por pull request
 
 ## Cópia pública do código
 
-Decisão de 19/11/2026: o código, as instruções do agente e a documentação ficam visíveis num repositório público separado; relatórios, estado, dados e painel ficam só aqui, que continua privado. Nada muda no briefing das 07h30, na coleta das 05h47, no aviso por issue nem no Apps Script, porque todos continuam usando este repositório.
+Decisão de 19/11/2026: o código, as instruções do agente e a documentação ficam visíveis num repositório público separado; relatórios, estado, dados e painel ficam só aqui, que continua privado. Nada muda no briefing das 07h30, na coleta das 05h47, nem no Apps Script, porque todos continuam usando este repositório.
 
 - Workflow `.github/workflows/espelho-publico.yml`: roda a cada mudança de código, instruções ou documentação na `main` (os relatórios e a coleta diária não o disparam) e pode ser rodado à mão em **Actions → Espelho público → Run workflow**.
 - A lista do que vai para o público e as checagens estão em `scripts/espelho/montar.sh`. O `README.md` e a licença (MIT) da versão pública ficam em `publico/`.

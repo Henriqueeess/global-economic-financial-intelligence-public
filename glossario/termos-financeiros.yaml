@@ -83,3 +83,83 @@ termos:
     definicao: Measures to improve public finances by cutting spending or raising revenue.
     traducao: Ajuste fiscal
     usado_em: ["2026-11-19"]
+  - termo: Bear Market
+    definicao: A fall of 20% or more from a recent peak in a market index.
+    traducao: Mercado em baixa (bear market)
+    usado_em: ["2026-11-20"]
+  - termo: FX Intervention
+    definicao: When a central bank buys or sells foreign currency to influence the exchange rate.
+    traducao: Intervenção cambial
+    usado_em: ["2026-11-20"]
+  - termo: Sell-off
+    definicao: A rapid, broad sale of assets that pushes prices down.
+    traducao: Onda de vendas / liquidação
+    usado_em: ["2026-11-20"]
+  - termo: Public Sector Net Borrowing
+    definicao: The gap between what the public sector spends and what it receives in a period.
+    traducao: Necessidade de financiamento do setor público
+    usado_em: ["2026-11-20"]
+  - termo: Offer Price
+    definicao: The price at which shares are sold to investors in an initial public offering (IPO).
+    traducao: Preço da oferta
+    usado_em: ["2026-11-20"]
+  - termo: Correction
+    definicao: A decline of 10% or more from a recent high in an asset or index.
+    traducao: Correção
+    usado_em: ["2026-11-21"]
+  - termo: Behind the Curve
+    definicao: When a central bank reacts too late to inflation or growth trends.
+    traducao: Atrás da curva (reagir tarde demais)
+    usado_em: ["2026-11-21"]
+  - termo: Safe Haven
+    definicao: An asset investors buy for protection in times of stress, such as Treasuries or gold.
+    traducao: Porto seguro / ativo de proteção
+    usado_em: ["2026-11-21"]
+  - termo: Carry Trade
+    definicao: Borrowing in a low-yielding currency to invest in a higher-yielding one.
+    traducao: Operação de carry trade
+    usado_em: ["2026-11-21"]
+  - termo: Government Shutdown
+    definicao: A halt of non-essential federal services when Congress fails to approve funding.
+    traducao: Paralisação do governo (shutdown)
+    usado_em: ["2026-11-21"]
+  - termo: Capital Flight
+    definicao: Rapid outflow of money from a country, usually driven by loss of confidence.
+    traducao: Fuga de capitais
+    usado_em: ["2026-11-22"]
+  - termo: Overweight
+    definicao: Holding more of an asset or market than its weight in the benchmark.
+    traducao: Sobreponderação (overweight)
+    usado_em: ["2026-11-22"]
+  - termo: Export Controls
+    definicao: Government rules that restrict the sale or transfer of sensitive goods or technology abroad.
+    traducao: Controles de exportação
+    usado_em: ["2026-11-22"]
+  - termo: Country Risk
+    definicao: The extra yield investors demand to hold a country's debt, reflecting default risk.
+    traducao: Risco-país
+    usado_em: ["2026-11-22"]
+  - termo: Rollover
+    definicao: Replacing maturing debt with new debt.
+    traducao: Rolagem da dívida
+    usado_em: ["2026-11-22"]
+  - termo: Deferred Tax Assets (DTAs)
+    definicao: Tax credits a company can use to reduce future tax payments, often counted in bank capital within limits.
+    traducao: Ativos fiscais diferidos (créditos tributários)
+    usado_em: ["2026-11-23"]
+  - termo: Collateral
+    definicao: Assets pledged to secure a loan, such as bonds a bank delivers to the central bank to borrow.
+    traducao: Garantia (colateral)
+    usado_em: ["2026-11-23"]
+  - termo: Primary Surplus
+    definicao: Government revenue minus spending, excluding interest payments, when the result is positive.
+    traducao: Superávit primário
+    usado_em: ["2026-11-23"]
+  - termo: Stress Test
+    definicao: A simulation of severe scenarios to check whether firms can absorb losses.
+    traducao: Teste de estresse
+    usado_em: ["2026-11-23"]
+  - termo: Stock Futures
+    definicao: Contracts on the future value of a stock index, traded before the cash market opens.
+    traducao: Futuros de índices de ações
+    usado_em: ["2026-11-23"]

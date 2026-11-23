@@ -53,6 +53,7 @@ Parâmetros (janela, fuso, limites) estão em `config/parametros.yaml`. Fontes e
 - A execução diária só cria ou altera arquivos em `relatorios/` e `estado/`.
 - Nunca altere `CLAUDE.md`, `config/`, `etapas/`, `modelos/`, `glossario/` (exceto o registro de uso descrito na etapa 6), `docs/` ou `scripts/` durante uma execução. Mudanças nesses arquivos são feitas apenas a pedido do responsável pelo projeto, por pull request.
 - `dados/` e `painel/` são gravados só pelo workflow `.github/workflows/coleta-indicadores.yml` (scripts em `scripts/`). O agente lê esses arquivos e nunca os altera.
+- `panorama/` é gravado só pelo workflow `.github/workflows/panorama.yml` (`scripts/gerar_panorama.py`), depois do briefing. O agente nunca o altera.
 - Nunca sobrescreva nem apague relatórios anteriores. Cada execução tem pasta própria.
 - Nunca reescreva o histórico do Git (sem `push --force`, sem `rebase` de commits já publicados).
 

@@ -9,7 +9,10 @@ Coletores determinísticos das APIs oficiais e gerador do painel diário (Fase 3
 | `gerar_painel.py` | Gera `painel/AAAA/MM/AAAA-MM-DD/painel-pt.md` e `painel-en.md`, com gráficos SVG, e atualiza `painel/ultimo-*.md` |
 | `indicadores/fontes.py` | Um coletor por API (BCB SGS e Focus, Tesouro dos EUA, BCE, Eurostat, BCRA, datos.gob.ar, FRED, BLS, Banxico, BC do Chile) |
 | `indicadores/curva.py` | Curva de juros do Tesouro Direto e vértices de prazo constante |
-| `indicadores/derivados.py` | Diferencial de juros, inclinação da curva e inflação implícita |
+| `gerar_dashboard.py` | Gera `painel/dashboard.html` (dashboard interativo da conjuntura, PT/EN) e `dados/conjuntura/*.csv` |
+| `indicadores/derivados.py` | Diferencial de juros, inclinação da curva, inflação implícita e juro real ex-ante |
+| `indicadores/conjuntura.py` | Termômetros (percentis desde 2016), índice de condições financeiras e contas mecânicas do IPCA, conforme `config/conjuntura.yaml` |
+| `indicadores/dashboard_modelo.html` | Modelo do dashboard: página única, sem bibliotecas nem chamadas externas |
 | `indicadores/painel.py` | Variações em 7 e 30 dias, extremos e destaques |
 | `indicadores/svg.py` | Gráficos em SVG puro, com tema claro e escuro |
 
@@ -19,7 +22,8 @@ Coletores determinísticos das APIs oficiais e gerador do painel diário (Fase 3
 pip install -r requirements.txt
 python scripts/coletar_series.py --backfill   # primeira vez: histórico desde config/indicadores.yaml → backfill_desde
 python scripts/coletar_series.py              # dia a dia: rebusca os últimos 45 dias para captar revisões
-python scripts/gerar_painel.py                # painel de hoje
+python scripts/gerar_painel.py                # painel de hoje (inclui a seção "Termômetros")
+python scripts/gerar_dashboard.py             # dashboard da conjuntura e dados/conjuntura/
 python -m pytest -q tests
 ```
 
@@ -31,6 +35,17 @@ Séries mensais usam o primeiro dia do mês de referência. Datas posteriores ao
 `dados/curva/tesouro_direto.csv`: `data_base`, `curva` (`prefixado` ou `ipca`), `vencimento`, `taxa_compra`, `taxa_venda` (% a.a.).
 
 `dados/ultima-coleta.json`: resultado da última coleta por indicador (`ok`, `falha` ou `sem_chave`).
+
+## Conjuntura (dados/conjuntura/)
+
+Calculada só a partir de `dados/series/`, sem chamar APIs. Nada projeta câmbio, juros de mercado ou preço de ativos.
+
+- `termometros.csv`: retrato do dia, um componente por linha, com o valor, o percentil no histórico desde 2016 e o percentil de um ano antes.
+- `contas.csv`: histórico das contas que não existem em `dados/series/` (IPCA 3 meses anualizado, inclinação 5a − 1a).
+- `condicoes_financeiras.csv`: índice semanal (0 a 100), média simples dos percentis de juro real ex-ante, IPCA+ 5 anos e prefixado 5 anos.
+- `cenarios_ipca.csv`: trajetória do IPCA em 12 meses sob duas premissas fixas (repetir a média de 3 meses; rodar no centro da meta). É aritmética, não previsão.
+
+Para o Power BI: **Obter dados → Texto/CSV** em cada arquivo (ou **Pasta** apontando para uma cópia local de `dados/series/`). Separador vírgula, decimal ponto, datas AAAA-MM-DD.
 
 ## Adicionar um indicador
 

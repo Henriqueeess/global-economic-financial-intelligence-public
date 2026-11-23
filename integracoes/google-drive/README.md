@@ -83,6 +83,30 @@ A página só abre logado na sua conta Google. Se o navegador tiver várias cont
 
 Para parar o e-mail: **Acionadores** → apagar o gatilho `verificarEEnviar`.
 
+### Dashboard da conjuntura (cerca de 5 minutos, depois da página PT/EN)
+
+O mesmo app da Web também mostra o dashboard interativo da conjuntura (`painel/dashboard.html`), com os termômetros e os gráficos desde 2016. O workflow de coleta gera o arquivo todo dia às 05h47; a página sempre mostra a versão mais recente.
+
+1. Abra o GitHub, entre no repositório e abra `integracoes/google-drive/Email.gs`. Clique no botão **Copy raw file** (ícone de duas folhas, no canto direito acima do código).
+2. Abra [script.google.com](https://script.google.com), clique no projeto do briefing e, na barra da esquerda, no arquivo **Email.gs**.
+3. Clique dentro do código, aperte **Ctrl+A** (no Mac, **Cmd+A**) e depois **Ctrl+V** para colar a versão nova por cima. Clique no ícone de disquete (**Salvar projeto**) no alto.
+4. Clique em **Implantar** (botão azul, canto superior direito) → **Gerenciar implantações**. Na implantação `Briefing PT/EN`, clique no lápis (**Editar**), abra a lista **Versão**, escolha **Nova versão** e clique em **Implantar**. O endereço `/exec` continua o mesmo.
+5. Para abrir o dashboard, use o endereço da propriedade `URL_PAGINA` com `?pg=conjuntura` no fim, por exemplo `https://script.google.com/macros/s/…/exec?pg=conjuntura`. Para abrir em inglês, use `?pg=conjuntura&ed=en`. Salve nos favoritos do navegador e do celular.
+
+Como conferir: a página abre com o título **Conjuntura macro**, a data dos dados no topo e o bloco **Termômetros**. Se aparecer "O dashboard ainda não foi gerado", espere a próxima coleta (ou rode **Actions → Coleta de indicadores → Run workflow** no GitHub) e recarregue.
+
+### Panorama Econômico (cerca de 5 minutos)
+
+O mesmo app da Web mostra o **Panorama Econômico** (`panorama/ultimo.html`): resumo do dia, números oficiais, curvas do Tesouro, termômetros, bancos centrais, agenda, leitura do dia e glossário, em português e inglês (botão **PT | EN** no topo). O workflow **Panorama Econômico** gera a página logo depois que o briefing é gravado. O e-mail diário ganha o botão **📊 Panorama Econômico**.
+
+1. No GitHub, abra `integracoes/google-drive/Email.gs` e clique em **Copy raw file** (ícone de duas folhas, à direita, acima do código).
+2. Em [script.google.com](https://script.google.com), abra o projeto do briefing e clique em **Email.gs** na barra da esquerda.
+3. Clique no código, aperte **Ctrl+A** (Mac: **Cmd+A**), depois **Ctrl+V**. Clique no disquete (**Salvar projeto**).
+4. **Implantar** (botão azul, canto superior direito) → **Gerenciar implantações** → lápis (**Editar**) na implantação `Briefing PT/EN` → **Versão: Nova versão** → **Implantar**. O endereço `/exec` não muda.
+5. Endereço direto: o da propriedade `URL_PAGINA` com `?pg=panorama` no fim (inglês: `?pg=panorama&ed=en`).
+
+Como conferir: rode `enviarUltimoAgora` (lista de funções no alto do editor → **Executar**). O e-mail que chega tem o botão **📊 Panorama Econômico**; ao tocar, abre a página com o título **Panorama Econômico** e a data do dia. Se aparecer "O Panorama ainda não foi gerado", rode **Actions → Panorama Econômico → Run workflow** no GitHub e recarregue.
+
 ## Manutenção
 
 - **Token expirado:** o script falha e o Google envia e-mail de erro do gatilho. Gere um token novo (passo 1) e troque o valor de `GITHUB_TOKEN`.

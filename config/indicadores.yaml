@@ -231,6 +231,26 @@ indicadores:
     decimais: 2
     fonte: {tipo: derivado, operacao: diferenca, a: br_selic_meta, b: us_t3m}
 
+  - id: br_juro_real_ex_ante
+    nome_pt: Juro real ex-ante (Selic − Focus IPCA 12 meses)
+    nome_en: Ex-ante real policy rate (Selic less Focus 12-month IPCA)
+    regiao: brasil
+    unidade: "% a.a."
+    frequencia: diaria
+    variacao: pp
+    decimais: 2
+    fonte: {tipo: derivado, operacao: juro_real, nominal: br_selic_meta, inflacao: br_focus_ipca_12m}
+
+  - id: br_diferencial_pre1a_t2a
+    nome_pt: Diferencial prefixado 1 ano − Treasury 2 anos
+    nome_en: Brazil 1-year nominal minus 2-year Treasury
+    regiao: brasil
+    unidade: "p.p."
+    frequencia: diaria
+    variacao: pp
+    decimais: 2
+    fonte: {tipo: derivado, operacao: diferenca, a: br_pre_1a, b: us_t2a}
+
   # ---------------- Estados Unidos ----------------
   - id: us_t3m
     nome_pt: Treasury 3 meses

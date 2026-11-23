@@ -67,6 +67,11 @@ jobs:
           TZ: America/Sao_Paulo
         run: python scripts/gerar_painel.py
 
+      - name: Gerar o dashboard da conjuntura
+        env:
+          TZ: America/Sao_Paulo
+        run: python scripts/gerar_dashboard.py
+
       - name: Checar segredos e escopo
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}

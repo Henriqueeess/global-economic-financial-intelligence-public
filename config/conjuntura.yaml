@@ -1,0 +1,202 @@
+# Conjuntura macro: termômetros, índice de condições financeiras e cenários mecânicos
+# Alterações neste arquivo são feitas apenas por pull request.
+#
+# Tudo aqui é calculado por scripts/indicadores/conjuntura.py a partir de dados/series/
+# (nenhuma API nova). O resultado vai para o painel diário (seção "Termômetros"),
+# para painel/dashboard.html e para dados/conjuntura/.
+#
+# Regra do projeto: nada aqui projeta câmbio, juros de mercado ou preço de ativo.
+# Os "cenários" são contas aritméticas com premissa declarada, não previsões.
+
+versao: 1
+historico_desde: "2016-01-01"   # base dos percentis
+
+# Metas de inflação do CMN (centro e tolerância, em %). Fonte:
+# https://www.bcb.gov.br/controleinflacao/historicometas
+# A partir de 2025 a meta é contínua (3%, tolerância de 1,5 p.p.).
+metas_inflacao:
+  fonte_url: "https://www.bcb.gov.br/controleinflacao/historicometas"
+  por_ano:
+    2016: {centro: 4.5, tolerancia: 2.0}
+    2017: {centro: 4.5, tolerancia: 1.5}
+    2018: {centro: 4.5, tolerancia: 1.5}
+    2019: {centro: 4.25, tolerancia: 1.5}
+    2020: {centro: 4.0, tolerancia: 1.5}
+    2021: {centro: 3.75, tolerancia: 1.5}
+    2022: {centro: 3.5, tolerancia: 1.5}
+    2023: {centro: 3.25, tolerancia: 1.5}
+    2024: {centro: 3.0, tolerancia: 1.5}
+  continua: {desde: 2025, centro: 3.0, tolerancia: 1.5}
+
+# Blocos do mapa de calor
+blocos:
+  - {id: inflacao, nome_pt: "Inflação", nome_en: "Inflation"}
+  - {id: monetaria, nome_pt: "Política monetária", nome_en: "Monetary policy"}
+  - {id: juros, nome_pt: "Juros de mercado", nome_en: "Market rates"}
+  - {id: diferenciais, nome_pt: "Diferenciais de juros", nome_en: "Rate differentials"}
+  - {id: global, nome_pt: "Global", nome_en: "Global"}
+
+# Componentes do mapa de calor. Fase 1 (decisão de 19/11/2026): só juros e inflação.
+# Atividade, fiscal, setor externo e crédito entram nas fases seguintes.
+#   serie         id em dados/series/
+#   calculo       nivel | ritmo_indice_3m (média de 3 meses contra os 3 meses anteriores, anualizada)
+#                 | acumulado_3m_anualizado (taxas mensais em %) | variacao_dias (variação % em `dias`)
+#                 | diferenca (serie − menos)
+#   O percentil compara o último valor com todo o histórico da mesma conta desde historico_desde.
+#   Taxas definidas em reunião (frequencia: reuniao no catálogo) contam por dia de vigência.
+componentes:
+  - id: ipca_12m
+    bloco: inflacao
+    serie: br_ipca_12m
+    calculo: nivel
+    nome_pt: "IPCA em 12 meses"
+    nome_en: "IPCA, 12 months"
+    unidade: "%"
+    decimais: 2
+  - id: ipca_3m_anualizado
+    bloco: inflacao
+    serie: br_ipca_mensal
+    calculo: acumulado_3m_anualizado
+    nome_pt: "IPCA 3 meses anualizado"
+    nome_en: "IPCA, 3-month annualized"
+    unidade: "%"
+    decimais: 2
+  - id: focus_ipca_12m
+    bloco: inflacao
+    serie: br_focus_ipca_12m
+    calculo: nivel
+    nome_pt: "Focus IPCA 12 meses à frente"
+    nome_en: "Focus IPCA 12 months ahead"
+    unidade: "%"
+    decimais: 2
+  - id: implicita_5a
+    bloco: inflacao
+    serie: br_inflacao_implicita_5a
+    calculo: nivel
+    nome_pt: "Inflação implícita 5 anos"
+    nome_en: "5-year breakeven"
+    unidade: "% a.a."
+    decimais: 2
+  - id: selic
+    bloco: monetaria
+    serie: br_selic_meta
+    calculo: nivel
+    nome_pt: "Meta Selic"
+    nome_en: "Selic target"
+    unidade: "% a.a."
+    decimais: 2
+  - id: juro_real_ex_ante
+    bloco: monetaria
+    serie: br_juro_real_ex_ante
+    calculo: nivel
+    nome_pt: "Juro real ex-ante"
+    nome_en: "Ex-ante real policy rate"
+    unidade: "% a.a."
+    decimais: 2
+  - id: pre_1a
+    bloco: juros
+    serie: br_pre_1a
+    calculo: nivel
+    nome_pt: "Prefixado 1 ano"
+    nome_en: "Nominal 1 year"
+    unidade: "% a.a."
+    decimais: 2
+  - id: pre_5a
+    bloco: juros
+    serie: br_pre_5a
+    calculo: nivel
+    nome_pt: "Prefixado 5 anos"
+    nome_en: "Nominal 5 years"
+    unidade: "% a.a."
+    decimais: 2
+  - id: ipca_mais_5a
+    bloco: juros
+    serie: br_ipca_mais_5a
+    calculo: nivel
+    nome_pt: "IPCA+ 5 anos"
+    nome_en: "IPCA+ 5 years"
+    unidade: "% a.a."
+    decimais: 2
+  - id: inclinacao_br
+    bloco: juros
+    serie: br_pre_5a
+    calculo: diferenca
+    menos: br_pre_1a
+    nome_pt: "Inclinação prefixado 5a − 1a"
+    nome_en: "Nominal slope 5y − 1y"
+    unidade: "p.p."
+    decimais: 2
+  - id: dif_selic_t3m
+    bloco: diferenciais
+    serie: br_diferencial_selic_t3m
+    calculo: nivel
+    nome_pt: "Diferencial Selic − Treasury 3m"
+    nome_en: "Selic minus 3m Treasury"
+    unidade: "p.p."
+    decimais: 2
+  - id: dif_pre1a_t2a
+    bloco: diferenciais
+    serie: br_diferencial_pre1a_t2a
+    calculo: nivel
+    nome_pt: "Diferencial pré 1a − Treasury 2a"
+    nome_en: "BR 1y minus 2y Treasury"
+    unidade: "p.p."
+    decimais: 2
+  - id: fed_funds
+    bloco: global
+    serie: us_fed_funds
+    calculo: nivel
+    nome_pt: "Fed funds"
+    nome_en: "Fed funds"
+    unidade: "%"
+    decimais: 2
+  - id: us_t10a
+    bloco: global
+    serie: us_t10a
+    calculo: nivel
+    nome_pt: "Treasury 10 anos"
+    nome_en: "10-year Treasury"
+    unidade: "%"
+    decimais: 2
+  - id: us_inclinacao
+    bloco: global
+    serie: us_inclinacao_10a_2a
+    calculo: nivel
+    nome_pt: "Inclinação EUA 10a − 2a"
+    nome_en: "US slope 10y − 2y"
+    unidade: "p.p."
+    decimais: 2
+  - id: bce_deposito
+    bloco: global
+    serie: ez_taxa_deposito
+    calculo: nivel
+    nome_pt: "Taxa de depósito do BCE"
+    nome_en: "ECB deposit rate"
+    unidade: "%"
+    decimais: 2
+  - id: hicp_12m
+    bloco: global
+    serie: ez_hicp_12m
+    calculo: nivel
+    nome_pt: "HICP zona do euro 12 meses"
+    nome_en: "Euro area HICP, 12 months"
+    unidade: "%"
+    decimais: 1
+
+# Índice de condições financeiras (Brasil), só com juros na fase 1 (decisão de 19/11/2026):
+# média simples dos percentis dos componentes, todos com o mesmo peso.
+# 0 = condições mais frouxas do histórico, 100 = mais apertadas.
+condicoes_financeiras:
+  componentes: [juro_real_ex_ante, ipca_mais_5a, pre_5a]
+  tolerancia_dias: 14
+
+# Cenários mecânicos do IPCA em 12 meses (contas, não previsões).
+cenarios_ipca:
+  meses: 12
+  premissas:
+    - id: media_3m
+      nome_pt: "Cada mês repete a média dos últimos 3 meses"
+      nome_en: "Each month repeats the average of the last 3 months"
+    - id: meta
+      nome_pt: "Cada mês roda no ritmo do centro da meta"
+      nome_en: "Each month runs at the pace of the target midpoint"

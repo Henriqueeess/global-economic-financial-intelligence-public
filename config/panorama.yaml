@@ -1,0 +1,123 @@
+# Panorama Econômico: página diária de conjuntura, em português e inglês
+# Alterações neste arquivo são feitas apenas por pull request.
+#
+# A página é montada por scripts/gerar_panorama.py, sem IA, a partir de:
+#   - relatorios/<execução do dia>/relatorio-pt.md e relatorio-en.md (textos, agenda, itens não confirmados)
+#   - dados/series/, dados/curva/ e as contas de scripts/indicadores/conjuntura.py (números, curvas, termômetros)
+# O workflow .github/workflows/panorama.yml roda o script logo depois que o briefing é gravado.
+#
+# Regra do projeto: a página não projeta câmbio, juros de mercado nem preço de ativo e não
+# recomenda nada. Foco em conjuntura macro.
+
+versao: 1
+
+# Cartões de "Números do dia". serie = id em dados/series/; termometro = id do componente em
+# config/conjuntura.yaml (dá o percentil desde 2016; opcional).
+cartoes:
+  - {serie: br_selic_meta, termometro: selic}
+  - {serie: br_dolar_ptax}
+  - {serie: br_pre_1a, termometro: pre_1a}
+  - {serie: br_pre_5a, termometro: pre_5a}
+  - {serie: br_ipca_mais_5a, termometro: ipca_mais_5a}
+  - {serie: br_inflacao_implicita_5a, termometro: implicita_5a}
+  - {serie: br_ipca_12m, termometro: ipca_12m}
+  - {serie: us_t10a, termometro: us_t10a}
+  - {serie: us_t2a}
+  - {serie: ez_eurusd}
+
+# Nome curto dos cartões (o do catálogo às vezes é longo demais para o cartão).
+nomes_curtos:
+  br_dolar_ptax: {pt: "Dólar PTAX venda", en: "USD/BRL PTAX"}
+  ez_eurusd: {pt: "EUR/USD (BCE)", en: "EUR/USD (ECB)"}
+
+# Curvas do Tesouro Direto: o dia mais recente contra o último dia disponível há pelo menos N dias.
+curvas:
+  comparar_dias: 7
+
+# Cartões de bancos centrais: só dados oficiais. Cada linha mostra o último valor da série.
+bancos_centrais:
+  - id: copom
+    nome_pt: "Copom · Brasil"
+    nome_en: "Copom · Brazil"
+    principal: br_selic_meta
+    linhas: [br_focus_selic_ano, br_juro_real_ex_ante, br_focus_ipca_12m]
+  - id: fomc
+    nome_pt: "FOMC · Estados Unidos"
+    nome_en: "FOMC · United States"
+    principal: us_fed_funds
+    linhas: [us_cpi_12m, us_t2a, us_t10a]
+  - id: bce
+    nome_pt: "BCE · Zona do euro"
+    nome_en: "ECB · Euro area"
+    principal: ez_taxa_deposito
+    linhas: [ez_hicp_12m]
+
+# Leitura do dia: itens das seções 2 a 6 do briefing, alternando entre seções.
+leitura:
+  secoes: [2, 3, 4, 5, 6]
+  maximo_itens: 7
+  frases_por_item: 2
+
+# Agenda: linhas da seção 7 que contêm uma destas palavras ficam em destaque (juros e inflação).
+agenda_destaque: [Fed, FOMC, Copom, BCE, ECB, Lagarde, CMN, PBOC, LPR, BoJ, Banxico, inflação, inflation,
+                  IPCA, CPI, PCE, HICP, juros, rate, payroll, emprego, jobless, desemprego, PIB, GDP,
+                  Focus, Tesouro, Treasury, leilão, auction]
+
+# Entenda os termos: aparecem os termos cujo gatilho está no texto do dia (no máximo `maximo`).
+# Os percentis e números citados nas explicações vêm dos dados, nunca do texto.
+glossario:
+  maximo: 8
+  sempre: [curva, implicita, percentil, bps]   # a própria página sempre usa esses termos
+  termos:
+    - id: selic
+      gatilhos: [Selic, Copom]
+      pt: {termo: "Selic e Copom", texto: "A Selic é a taxa básica de juros do Brasil, definida pelo Copom do Banco Central a cada 45 dias. Ela serve de piso para quase todos os juros da economia, do CDB ao financiamento."}
+      en: {termo: "Selic and Copom", texto: "The Selic is Brazil's policy interest rate, set by the Central Bank's Copom every 45 days. It is the floor for almost every interest rate in the economy, from bank deposits to loans."}
+    - id: curva
+      gatilhos: [curva, yield curve, DI, prefixad]
+      pt: {termo: "Curva de juros", texto: "Mostra quanto o Tesouro paga para tomar dinheiro emprestado por 1, 2, 5 ou mais anos. Quando ela sobe, o mercado está pedindo mais para emprestar ao governo por mais tempo."}
+      en: {termo: "Yield curve", texto: "Shows how much the Treasury pays to borrow for 1, 2, 5 or more years. When it rises, investors are asking for more to lend to the government for longer."}
+    - id: pre_ipca
+      gatilhos: [IPCA+, NTN-B, prefixad]
+      pt: {termo: "Prefixado e IPCA+", texto: "O prefixado paga uma taxa fechada. O IPCA+ paga a inflação mais uma taxa real. A diferença entre os dois é a inflação implícita."}
+      en: {termo: "Nominal and IPCA+ bonds", texto: "A nominal bond pays a fixed rate. An IPCA+ bond pays inflation plus a real rate. The gap between the two is breakeven inflation."}
+    - id: implicita
+      gatilhos: [implícita, breakeven]
+      pt: {termo: "Inflação implícita", texto: "A inflação média que os preços dos títulos sugerem para os próximos anos. A meta do Banco Central é de 3% ao ano."}
+      en: {termo: "Breakeven inflation", texto: "The average inflation that bond prices imply for the coming years. The Central Bank's target is 3% a year."}
+    - id: bps
+      gatilhos: [bps, pontos-base, basis point]
+      pt: {termo: "Ponto-base (bps)", texto: "Um centésimo de ponto percentual. Uma taxa que vai de 14,65% para 14,94% subiu 29 bps."}
+      en: {termo: "Basis point (bp)", texto: "One hundredth of a percentage point. A rate that moves from 14.65% to 14.94% rose 29 bps."}
+    - id: percentil
+      gatilhos: [percentil, percentile]
+      pt: {termo: "Percentil", texto: "Onde o valor de hoje fica no histórico desde 2016. Percentil 90 quer dizer que o indicador esteve abaixo do nível de hoje em 90% dos dias."}
+      en: {termo: "Percentile", texto: "Where today's value sits in the history since 2016. The 90th percentile means the indicator was below today's level on 90% of days."}
+    - id: ata
+      gatilhos: [ata, minutes]
+      pt: {termo: "Ata", texto: "O registro da discussão da última reunião de um banco central. No Fed, sai três semanas depois; no Copom, na terça-feira seguinte. O mercado lê a ata para entender os próximos passos dos juros."}
+      en: {termo: "Minutes", texto: "The record of a central bank's last policy discussion. The Fed releases them three weeks later; Copom, on the following Tuesday. Markets read the minutes for clues about the next rate moves."}
+    - id: focus
+      gatilhos: [Focus]
+      pt: {termo: "Focus", texto: "Pesquisa semanal do Banco Central com cerca de 100 instituições sobre inflação, Selic, câmbio e PIB. É a expectativa mediana do mercado, não uma previsão do BC."}
+      en: {termo: "Focus survey", texto: "The Central Bank of Brazil's weekly survey of about 100 institutions on inflation, Selic, exchange rate and GDP. It is the market's median expectation, not a central bank forecast."}
+    - id: ptax
+      gatilhos: [PTAX]
+      pt: {termo: "PTAX", texto: "A taxa de câmbio de referência do Banco Central, calculada com quatro consultas aos bancos ao longo do dia. Serve de base para contratos e é diferente da cotação de fechamento do mercado."}
+      en: {termo: "PTAX", texto: "The Central Bank of Brazil's reference exchange rate, computed from four polls of dealers during the day. Contracts use it, and it differs from the market closing quote."}
+    - id: fiscal
+      gatilhos: [fiscal, primário, primary balance, arcabouço]
+      pt: {termo: "Resultado primário", texto: "Receitas menos despesas do governo, sem contar os juros da dívida. Quando é negativo, a dívida tende a crescer, o que costuma pesar sobre os juros longos."}
+      en: {termo: "Primary balance", texto: "Government revenue minus spending, excluding interest on the debt. A deficit tends to push debt up, which usually weighs on long-term rates."}
+    - id: treasury
+      gatilhos: [Treasury, Treasuries]
+      pt: {termo: "Treasury", texto: "Título da dívida do governo americano. O de 10 anos é a referência de juro longo do mundo e influencia o custo de dinheiro em todos os países."}
+      en: {termo: "Treasury", texto: "A US government bond. The 10-year note is the world's benchmark long-term rate and affects borrowing costs in every country."}
+    - id: emergentes
+      gatilhos: [emergentes, emerging]
+      pt: {termo: "Mercados emergentes", texto: "Países de renda média com mercados financeiros em crescimento, como Brasil, México e Índia. Costumam sofrer juntos quando os juros americanos sobem."}
+      en: {termo: "Emerging markets", texto: "Middle-income countries with growing financial markets, such as Brazil, Mexico and India. They tend to suffer together when US rates rise."}
+    - id: pib
+      gatilhos: [PIB, GDP, IBC-Br]
+      pt: {termo: "PIB e IBC-Br", texto: "O PIB mede tudo o que o país produz no trimestre e é divulgado pelo IBGE. O IBC-Br é uma prévia mensal do Banco Central, usada para acompanhar a atividade antes do dado oficial."}
+      en: {termo: "GDP and IBC-Br", texto: "GDP measures everything the country produces in a quarter and is released by IBGE. IBC-Br is the Central Bank's monthly proxy, used to track activity before the official figure."}

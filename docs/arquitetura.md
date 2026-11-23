@@ -40,12 +40,24 @@ Gatilho agendado (todos os dias, 07h30 America/Sao_Paulo) ──► 1. Configura
 - Curva de juros brasileira a partir das taxas do Tesouro Direto (títulos sem cupom), com vértices de prazo constante interpolados e inflação implícita.
 - Proposta completa: documento "Proposta — Painel diário de indicadores" no projeto do Claude.
 
+## Panorama Econômico (aprovado em 19/11/2026)
+
+```
+07h30  briefing grava relatorios/<execução>/ ──► workflow panorama.yml
+       scripts/gerar_panorama.py ──► panorama/ultimo.html e panorama/AAAA/MM/AAAA-MM-DD.html
+       Apps Script: ?pg=panorama (PT) e ?pg=panorama&ed=en (EN); botão no e-mail diário
+```
+
+- Página única com as duas edições (botão PT | EN), montada sem IA a partir do briefing e de `dados/`.
+- Foco em conjuntura macro para acompanhar o mercado e aprender: sem resultados de empresas, sem recomendação, sem projeção de câmbio ou preço de ativo, sem canais privados (WhatsApp, e-mail).
+- O que entra fica em `config/panorama.yaml` (cartões, bancos centrais, destaques da agenda, glossário).
+
 ## Decisões
 
 | Tema | Decisão |
 | --- | --- |
 | Repositório | GitHub privado, fonte oficial de configuração e histórico |
-| Entrega | Arquivos Markdown no repositório, em ordem cronológica; aviso por e-mail via issue do GitHub (resumo e links) |
+| Entrega | Arquivos Markdown no repositório, em ordem cronológica; e-mail em HTML no Gmail, enviado pelo Apps Script do responsável (o aviso por issue do GitHub foi desligado em 23/11/2026) |
 | Agendamento | Todos os dias, 07h30, America/Sao_Paulo (ativo desde 18/11/2026, após 3 execuções manuais validadas) |
 | Idioma | Instruções e documentação em português; relatórios em inglês e português |
 | Fontes | Apenas gratuitas: APIs públicas, RSS e busca |

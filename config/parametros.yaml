@@ -68,8 +68,8 @@ painel_indicadores:
 
 aviso_email:
   ativo: true
-  metodo: issue do GitHub aberta por .github/workflows/aviso-relatorio.yml
-  conteudo: International Edition completa no corpo do e-mail (newsletter) e links da edição em português, fontes, verificação e paridade
-  observacao: o agente não envia e-mails; o GitHub notifica quem acompanha o repositório
+  metodo: e-mail em HTML enviado pelo Google Apps Script do responsável (integracoes/google-drive/Email.gs)
+  conteudo: edição em português formatada (resumo no topo, notícias em cartões) e links para a edição em inglês, fontes, verificação e paridade
+  observacao: o agente não envia e-mails; o aviso por issue do GitHub (.github/workflows/aviso-relatorio.yml) foi desligado em 23/11/2026 e só roda à mão
 
 fontes_pagas_permitidas: false

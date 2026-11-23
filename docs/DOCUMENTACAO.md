@@ -44,8 +44,7 @@ Um agente (Claude) roda na nuvem, lê as regras e configurações deste reposit�
   └─► Tarefa agendada do Claude, no ambiente global-economic-financial-intelligence
         └─► 7 etapas (configuração → … → entrega)
               └─► commit e push em main: relatorios/AAAA/MM/AAAA-MM-DD_HHMM/
-                    ├─► GitHub Actions abre uma issue com a International Edition
-                    │     └─► GitHub envia o e-mail (newsletter) ao responsável
+                    ├─► Apps Script envia o e-mail em HTML (edição em português) ao Gmail do responsável
                     └─► (PR #13) Apps Script copia as edições para o Google Drive, 9h–10h
                           └─► NotebookLM lê os Docs atualizados
 ```
@@ -78,7 +77,7 @@ Princípios do projeto:
 ├── relatorios/AAAA/MM/…          uma pasta por execução, nunca sobrescrita
 ├── docs/                         arquitetura, segurança, fontes e termos de uso, operação, esta documentação
 ├── scripts/                      reservado para a Fase 3 (coletores de dados)
-└── .github/workflows/aviso-relatorio.yml   automação do aviso por e-mail
+└── .github/workflows/aviso-relatorio.yml   aviso por issue (desligado em 23/11/2026; só manual)
 ```
 
 Com o PR #13 (ainda aberto), entra também `integracoes/google-drive/` (Apps Script do Drive/NotebookLM).
@@ -254,6 +253,8 @@ No GitHub: `relatorios/` → ano → mês → pasta da execução → `relatorio
 
 ## 9. Newsletter por e-mail (GitHub Actions)
 
+**Desligado em 23/11/2026**, a pedido do responsável: o briefing chega só pelo e-mail em HTML do Gmail (fim desta seção). O gatilho por push foi retirado de `.github/workflows/aviso-relatorio.yml`; o workflow só roda à mão. Para religar, devolver o bloco `push` em `on:`. O texto abaixo registra como funcionava.
+
 Decisão de 18/11/2026: o aviso de cada relatório chega por e-mail pela notificação do próprio GitHub, sem senhas e sem dar ao agente a capacidade de enviar e-mails.
 
 **Como funciona** (`.github/workflows/aviso-relatorio.yml`):
@@ -272,7 +273,7 @@ Por que uma automação e não o agente: o agente usa a conta do responsável, e
 
 Histórico: PR #2 (aviso com resumo), PR #4 (atribuição ao dono e Run workflow, depois que a primeira issue não gerou e-mail), PR #6 (International Edition completa no corpo).
 
-**E-mail em HTML no Gmail (19/11/2026):** o e-mail da issue ficou difícil de ler. A edição em português passa a chegar também como e-mail formatado, enviado pelo Apps Script da seção 10 (`integracoes/google-drive/Email.gs`): resumo executivo no topo, notícias em cartões com tipo de fonte e botão "Ler na fonte", tabelas empilhadas para o celular e links para fontes, verificação, paridade e log. Um gatilho de 15 em 15 minutos envia cada relatório uma vez, para o próprio responsável. A issue continua ativa até o responsável decidir desligá-la.
+**E-mail em HTML no Gmail (19/11/2026):** o e-mail da issue ficou difícil de ler. A edição em português passa a chegar também como e-mail formatado, enviado pelo Apps Script da seção 10 (`integracoes/google-drive/Email.gs`): resumo executivo no topo, notícias em cartões com tipo de fonte e botão "Ler na fonte", tabelas empilhadas para o celular e links para fontes, verificação, paridade e log. Um gatilho de 15 em 15 minutos envia cada relatório uma vez, para o próprio responsável. Desde 23/11/2026 é o único aviso por e-mail.
 
 ## 10. Cópia no Google Drive para o NotebookLM
 
@@ -400,7 +401,8 @@ Fontes, temas, parâmetros, instruções e modelos mudam **apenas por pull reque
 | Item | Situação | Observações |
 | --- | --- | --- |
 | Briefing diário bilíngue agendado | Ativo desde 18/11/2026 | Fase 2: revisão por amostragem por duas semanas |
-| Newsletter por e-mail (International Edition) | Ativo | GitHub Actions + issue atribuída ao dono |
+| Newsletter por e-mail (International Edition) | Desligado em 23/11/2026 | Substituído pelo e-mail em HTML do Apps Script |
+| E-mail diário em HTML no Gmail (edição em português) | Ativo | Apps Script na conta Google do responsável |
 | Cópia no Google Drive para o NotebookLM | PR #13 aberto | Instalação manual na conta Google depois do merge |
 | **Painel diário de indicadores**, com histórico de 10 anos (backfill) e **curva de juros do Tesouro dos EUA** | Em desenvolvimento | Fase 3; trabalho em andamento em outra frente do projeto, com pull request próprio |
 | Chaves gratuitas de FRED, BEA, BLS, Banxico e BCentral Chile | Pendente | Ampliam o painel e a coleta |
@@ -422,7 +424,7 @@ Fontes, temas, parâmetros, instruções e modelos mudam **apenas por pull reque
 | Janela | 24 h antes do início + temas em andamento |
 | Pasta de saída | `relatorios/AAAA/MM/AAAA-MM-DD_HHMM[-manual][-N]/` |
 | Arquivos por execução | `relatorio-en.md`, `relatorio-pt.md`, `fontes.json`, `verificacao.md`, `paridade.md`, `execucao.log` |
-| Aviso por e-mail | `.github/workflows/aviso-relatorio.yml` |
+| Aviso por e-mail | `integracoes/google-drive/Email.gs` (Apps Script); o `.github/workflows/aviso-relatorio.yml` está desligado |
 | Variáveis de ambiente previstas | `FRED_API_KEY`, `BEA_API_KEY`, `BLS_API_KEY`, `BANXICO_TOKEN`, `BCENTRAL_USER`, `BCENTRAL_PASS` |
 | Fontes pagas | Não permitidas |
 

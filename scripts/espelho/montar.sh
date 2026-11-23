@@ -28,6 +28,11 @@ INCLUIR=(
 # Caminhos que nunca podem aparecer na cópia pública.
 PROIBIDO='^(relatorios|estado|dados|painel)/|\.html?$|(^|/)\.env|\.(pem|key|p12|pfx)$|(^|/)(credenciais|secrets)'
 
+# Exceção: os modelos HTML do dashboard e do Panorama são código (sem dados; o
+# gerador troca o marcador /*__DADOS__*/null pelo JSON do dia). Só entram se o
+# marcador estiver vazio, conferido abaixo.
+MODELOS_HTML='^scripts/indicadores/[a-z_]+_modelo\.html$'
+
 # Formatos de credencial reais (mais estrito que a etapa 7, porque o código
 # tem linhas legítimas como "const token = ...").
 SEGREDOS='(ghp_[A-Za-z0-9]{20,}|gho_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9]{20,}|xox[abp]-[A-Za-z0-9-]{10,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----)'
@@ -56,9 +61,14 @@ fi
 
 # Checagens: qualquer falha impede a publicação.
 cd "$SAIDA"
-if find . -type f | sed 's|^\./||' | grep -E "$PROIBIDO"; then
+if find . -type f | sed 's|^\./||' | grep -Ev "$MODELOS_HTML" | grep -E "$PROIBIDO"; then
   echo "BLOQUEADO: caminho privado na cópia pública."; exit 1
 fi
+for modelo in $(find . -type f | sed 's|^\./||' | grep -E "$MODELOS_HTML" || true); do
+  if ! grep -qF '/*__DADOS__*/null' "$modelo"; then
+    echo "BLOQUEADO: $modelo não está com o marcador de dados vazio."; exit 1
+  fi
+done
 if grep -rIlE "$SEGREDOS" .; then
   echo "BLOQUEADO: padrão de credencial na cópia pública."; exit 1
 fi

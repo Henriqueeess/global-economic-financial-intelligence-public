@@ -20,7 +20,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from indicadores import curva  # noqa: E402
+from indicadores import conjuntura, curva  # noqa: E402
 from indicadores.painel import Linha, calcular_linha, destaques, ultimo_ate  # noqa: E402
 from indicadores.svg import grafico_linhas, minigrafico  # noqa: E402
 from indicadores.util import PASTA_PAINEL, RAIZ, carregar_catalogo, hoje, ler_serie, valores  # noqa: E402
@@ -61,12 +61,25 @@ T = {
         "sem_dados": "sem dados",
         "desatualizado": "desatualizado",
         "falha_hoje": "coleta de hoje falhou; último dado gravado",
+        "termo": "Termômetros da conjuntura",
+        "termo_nota": ("Cada indicador em percentil do próprio histórico desde {desde}: 0 é o menor valor do período, "
+                       "100 o maior e 50 a mediana. É uma leitura descritiva de onde estamos, não uma previsão. "
+                       "Painel interativo com o histórico completo: [`painel/dashboard.html`]({dash})."),
+        "cab_t": "| Bloco | Indicador | Último | Data | Percentil | Há 1 ano |",
+        "icf": ("**Índice de condições financeiras (Brasil)**: {v} de 100 em {d} ({q}). Média simples, com pesos "
+                "iguais, dos percentis de {comps}. Acima de 50, condições mais apertadas que a mediana desde {desde}."),
+        "icf_q": ["muito frouxas", "frouxas", "neutras", "apertadas", "muito apertadas"],
+        "cen": ("**Conta mecânica do IPCA (não é previsão)**: o IPCA em 12 meses está em {atual} ({mes}). "
+                "Se cada mês seguinte repetir a média dos últimos 3 meses ({m3}% ao mês), ele chega a {v_m3} em {fim}; "
+                "se cada mês rodar no ritmo do centro da meta ({meta}%), chega a {v_meta}. Meta: {centro}%, "
+                "com tolerância de {tol} p.p."),
         "metodo": "Método",
         "metodo_txt": [
             "Fonte única: APIs oficiais e gratuitas listadas em `config/indicadores.yaml`. Nenhum número é digitado à mão.",
             "Δ em p.p. para taxas (diferença simples) e em % para preços e índices.",
             "Fins de semana e feriados não têm cotação nova: cada linha mostra a data do último dado real.",
-            "Indicadores derivados (diferencial de juros, inclinação, inflação implícita) são calculados a partir das séries oficiais.",
+            "Indicadores derivados (diferencial de juros, inclinação, inflação implícita, juro real ex-ante) são calculados a partir das séries oficiais.",
+            "Termômetros, condições financeiras e contas do IPCA seguem `config/conjuntura.yaml` e não projetam câmbio, juros nem preço de ativos.",
         ],
         "pp": "p.p.",
         "bps": "{v} p.b.",
@@ -101,12 +114,25 @@ T = {
         "sem_dados": "no data",
         "desatualizado": "stale",
         "falha_hoje": "today's collection failed; last stored value",
+        "termo": "Macro thermometers",
+        "termo_nota": ("Each indicator as a percentile of its own history since {desde}: 0 is the lowest value in the "
+                       "period, 100 the highest and 50 the median. It describes where we are; it is not a forecast. "
+                       "Interactive dashboard with the full history: [`painel/dashboard.html`]({dash})."),
+        "cab_t": "| Block | Indicator | Latest | Date | Percentile | 1 year ago |",
+        "icf": ("**Financial conditions index (Brazil)**: {v} out of 100 on {d} ({q}). Simple equal-weight average "
+                "of the percentiles of {comps}. Above 50 means tighter than the median since {desde}."),
+        "icf_q": ["very loose", "loose", "neutral", "tight", "very tight"],
+        "cen": ("**IPCA arithmetic (not a forecast)**: 12-month IPCA inflation stands at {atual} ({mes}). "
+                "If each coming month repeats the average of the last 3 months ({m3}% a month), it reaches {v_m3} "
+                "by {fim}; if each month runs at the pace of the target midpoint ({meta}%), it reaches {v_meta}. "
+                "Target: {centro}%, with a {tol} pp tolerance band."),
         "metodo": "Method",
         "metodo_txt": [
             "Single source: free official APIs listed in `config/indicadores.yaml`. No number is typed by hand.",
             "Δ in pp for rates (simple difference) and in % for prices and indices.",
             "Weekends and holidays have no new quotes: each row shows the date of the latest actual data point.",
-            "Derived indicators (rate differential, curve slope, breakeven inflation) are computed from the official series.",
+            "Derived indicators (rate differential, curve slope, breakeven inflation, ex-ante real rate) are computed from the official series.",
+            "Thermometers, financial conditions and the IPCA arithmetic follow `config/conjuntura.yaml` and do not project FX, rates or asset prices.",
         ],
         "pp": "pp",
         "bps": "{v} bp",
@@ -247,8 +273,56 @@ def secao_curva(ref: dt.date, cfg: dict, lang: str, graf: str, pasta_graf: Path 
     return out
 
 
+def barra(pct: float) -> str:
+    cheios = int(round(pct / 10))
+    return "█" * cheios + "░" * (10 - cheios)
+
+
+def secao_termometros(conj: "conjuntura.Conjuntura | None", lang: str, prefixo: str) -> list[str]:
+    if conj is None or not any(t.ultimo for t in conj.termometros):
+        return []
+    t = T[lang]
+    desde = dt.date.fromisoformat(conj.cfg["historico_desde"])
+    out = [f"## {t['termo']}", "",
+           t["termo_nota"].format(desde=desde.year, dash=f"{prefixo}painel/dashboard.html"), "",
+           t["cab_t"], "| --- | --- | ---: | --- | ---: | ---: |"]
+    blocos = {b["id"]: b[f"nome_{lang}"] for b in conj.cfg["blocos"]}
+    for tm in conj.termometros:
+        if not tm.ultimo:
+            continue
+        c = tm.comp
+        d, v = tm.ultimo
+        u = c["unidade"]
+        val = f"{num(v, c['decimais'], lang)}{'%' if u == '%' else ' ' + (t['pp'] if u == 'p.p.' else u)}"
+        quando = mes(d, lang) if tm.mensal else data_curta(d, lang)
+        ano = num(tm.pct_1a, 0, lang) if tm.pct_1a is not None else "—"
+        out.append(f"| {blocos[c['bloco']]} | {c[f'nome_{lang}']} | {val} | {quando} | "
+                   f"`{barra(tm.pct)}` {num(tm.pct, 0, lang)} | {ano} |")
+    out.append("")
+    if conj.icf:
+        d, v = conj.icf[-1]
+        q = t["icf_q"][min(4, int(v // 20))]
+        nomes = {x.comp["id"]: x.comp[f"nome_{lang}"] for x in conj.termometros}
+        comps = [nomes[c] for c in conj.cfg["condicoes_financeiras"]["componentes"] if c in nomes]
+        junta = (", ".join(comps[:-1]) + (" e " if lang == "pt" else " and ") + comps[-1]) if len(comps) > 1 else comps[0]
+        out += [t["icf"].format(v=num(v, 0, lang), d=data_curta(d, lang), q=q, comps=junta, desde=desde.year), ""]
+    cen = conj.cenarios
+    if "media_3m" in cen and "meta" in cen and conj.ipca_mensal:
+        ini, atual = cen["media_3m"][0]
+        fim, v_m3 = cen["media_3m"][-1]
+        meta = conjuntura.meta_do_ano(conj.cfg, fim.year) or {}
+        m3 = sum(v for _, v in conj.ipca_mensal[-3:]) / 3
+        meta_m = ((1 + meta.get("centro", 0) / 100) ** (1 / 12) - 1) * 100
+        out += [t["cen"].format(atual=f"{num(atual, 2, lang)}%", mes=mes(ini, lang), m3=num(m3, 2, lang),
+                                v_m3=f"{num(v_m3, 2, lang)}%", fim=mes(fim, lang), meta=num(meta_m, 2, lang),
+                                v_meta=f"{num(cen['meta'][-1][1], 2, lang)}%",
+                                centro=num(meta.get("centro", 0), 1, lang),
+                                tol=num(meta.get("tolerancia", 0), 1, lang)), ""]
+    return out
+
+
 def montar(lang: str, ref: dt.date, cat: dict, linhas: dict[str, Linha], coleta: dict, prefixo: str,
-           graf: str, outra: str, pasta_graf: Path | None) -> str:
+           graf: str, outra: str, pasta_graf: Path | None, conj: "conjuntura.Conjuntura | None" = None) -> str:
     t = T[lang]
     quando = coleta.get("_coleta")
     coleta_txt = (dt.datetime.fromisoformat(quando).strftime("%d/%m/%Y %Hh%M" if lang == "pt" else "%Y-%m-%d %H:%M")
@@ -264,6 +338,8 @@ def montar(lang: str, ref: dt.date, cat: dict, linhas: dict[str, Linha], coleta:
             out.append(f"- **{l.ind[f'nome_{lang}']}**: {valor_fmt(l, l.valor, lang)}, "
                        f"{delta_fmt(l, l.var_7d, lang)} ({num(l.z_7d, 1, lang, sinal=True)} {t['dp']})")
         out.append("")
+
+    out += secao_termometros(conj, lang, prefixo)
 
     for reg in cat["regioes"]:
         da_regiao = [linhas[i["id"]] for i in cat["indicadores"]
@@ -315,6 +391,12 @@ def main() -> int:
     linhas = {i["id"]: calcular_linha(i, valores(i["id"]), ref)
               for i in cat["indicadores"] if i.get("ativo", True)}
 
+    try:
+        conj = conjuntura.calcular(ref, catalogo=cat)
+    except Exception as e:  # a conjuntura nunca derruba o painel
+        print(f"conjuntura indisponível: {type(e).__name__}: {e}")
+        conj = None
+
     pasta = PASTA_PAINEL / f"{ref:%Y}" / f"{ref:%m}" / ref.isoformat()
     graficos = pasta / "graficos"
     graficos.mkdir(parents=True, exist_ok=True)
@@ -326,10 +408,10 @@ def main() -> int:
     for lang in ("pt", "en"):
         outro = "en" if lang == "pt" else "pt"
         texto = montar(lang, ref, cat, linhas, coleta, prefixo="../../../../", graf="graficos/",
-                       outra=f"painel-{outro}.md", pasta_graf=graficos)
+                       outra=f"painel-{outro}.md", pasta_graf=graficos, conj=conj)
         (pasta / f"painel-{lang}.md").write_text(texto, encoding="utf-8")
         ultimo = montar(lang, ref, cat, linhas, coleta, prefixo="../", graf=f"{relativo}graficos/",
-                        outra=f"ultimo-{outro}.md", pasta_graf=None)
+                        outra=f"ultimo-{outro}.md", pasta_graf=None, conj=conj)
         (PASTA_PAINEL / f"ultimo-{lang}.md").write_text(ultimo, encoding="utf-8")
     print(f"painel gravado em {pasta.relative_to(RAIZ)}")
     return 0

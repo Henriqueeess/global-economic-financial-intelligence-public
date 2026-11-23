@@ -109,6 +109,8 @@ function doGet(e) {
   const idioma = p.ed === 'en' ? 'en' : 'pt';
   const token = PropertiesService.getScriptProperties().getProperty('GITHUB_TOKEN');
   if (!token) return HtmlService.createHtmlOutput('Falta a propriedade GITHUB_TOKEN.');
+  if (p.pg === 'conjuntura') return paginaConjuntura_(token, idioma);
+  if (p.pg === 'panorama') return paginaPanorama_(token, idioma);
 
   let ex = null;
   if (p.pasta) {
@@ -128,6 +130,35 @@ function doGet(e) {
   });
   return HtmlService.createHtmlOutput(pagina.html)
     .setTitle(pagina.assunto)
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+/**
+ * Dashboard da conjuntura (painel/dashboard.html), aberto com ?pg=conjuntura (e &ed=en para inglês).
+ * O arquivo é gerado pelo workflow de coleta a partir de scripts/indicadores/dashboard_modelo.html,
+ * que está no próprio repositório: é código do projeto, não conteúdo de terceiros. Os dados vão
+ * embutidos como JSON e a página não chama nenhum endereço externo.
+ */
+function paginaConjuntura_(token, idioma) {
+  const html = chamarGitHub_(token, 'painel/dashboard.html', true);
+  if (html === null) return HtmlService.createHtmlOutput('O dashboard ainda não foi gerado (painel/dashboard.html).');
+  const pagina = idioma === 'en' ? html.replace('let lang = "pt"', 'let lang = "en"') : html;
+  return HtmlService.createHtmlOutput(pagina)
+    .setTitle(idioma === 'en' ? 'Macro conditions' : 'Conjuntura macro')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+/**
+ * Panorama Econômico (panorama/ultimo.html), aberto com ?pg=panorama (e &ed=en para inglês).
+ * Gerado pelo workflow panorama.yml a partir de scripts/indicadores/panorama_modelo.html (código do
+ * projeto). Os textos do briefing chegam escapados; a página não chama nenhum endereço externo.
+ */
+function paginaPanorama_(token, idioma) {
+  const html = chamarGitHub_(token, 'panorama/ultimo.html', true);
+  if (html === null) return HtmlService.createHtmlOutput('O Panorama ainda não foi gerado (panorama/ultimo.html).');
+  const pagina = html.replace('const LANG_FIXO = "";', 'const LANG_FIXO = "' + idioma + '";');
+  return HtmlService.createHtmlOutput(pagina)
+    .setTitle(idioma === 'en' ? 'Economic Overview' : 'Panorama Econômico')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 
@@ -161,7 +192,7 @@ function execucoesDoDia_(token, dia) {
 
 const TXT = {
   pt: {
-    lang: 'pt-BR', marca: 'Briefing econômico', outro: 'Read in English', github: 'Ver no GitHub',
+    lang: 'pt-BR', marca: 'Briefing econômico', outro: 'Read in English', panorama: '📊 Panorama Econômico', github: 'Ver no GitHub',
     indice: 'Nesta edição:', fonte: 'Ler na fonte', apoio: 'Fontes de apoio:', analise: 'análise do briefing',
     arquivos: 'Arquivos desta execução:', execucao: 'Execução',
     rodapeEmail: 'E-mail automático enviado pelo seu Apps Script "Briefing → Drive".',
@@ -170,7 +201,7 @@ const TXT = {
     nomes: ['Edição em português', 'International Edition', 'Fontes', 'Verificação', 'Paridade', 'Log'],
   },
   en: {
-    lang: 'en', marca: 'Economic briefing', outro: 'Ler em português', github: 'View on GitHub',
+    lang: 'en', marca: 'Economic briefing', outro: 'Ler em português', panorama: '📊 Economic Overview', github: 'View on GitHub',
     indice: 'In this edition:', fonte: 'Read source', apoio: 'Supporting sources:', analise: 'briefing analysis',
     arquivos: 'Files from this run:', execucao: 'Run',
     rodapeEmail: 'Automatic email sent by your "Briefing → Drive" Apps Script.',
@@ -266,6 +297,7 @@ function montarEmail_(md, ctx) {
     '<div style="font-size:14px;opacity:.85;margin-top:6px;">', inline_(subtitulo.replace(/\*\*/g, ''), base, '#ffffff'), '</div>',
     '<div style="margin-top:14px;">',
     botao_((idioma === 'pt' ? '🇬🇧 ' : '🇧🇷 ') + T.outro, urlOutro, true), ' ',
+    ctx.urlWeb ? botao_(T.panorama, ctx.urlWeb + '?pg=panorama&ed=' + idioma, true) + ' ' : '',
     botao_(T.github, base + arquivoEdicao, true), '</div></td></tr>');
 
   if (incompleto) {

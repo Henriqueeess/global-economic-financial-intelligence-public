@@ -7,6 +7,8 @@ on:
       - "scripts/**"
       - "tests/**"
       - "config/indicadores.yaml"
+      - "config/conjuntura.yaml"
+      - "config/panorama.yaml"
       - "requirements.txt"
 
 permissions:
@@ -26,3 +28,5 @@ jobs:
       - run: python -m pytest -q tests
       - name: O painel é gerado a partir dos dados gravados
         run: python scripts/gerar_painel.py
+      - name: O Panorama é gerado a partir do último briefing
+        run: python scripts/gerar_panorama.py
