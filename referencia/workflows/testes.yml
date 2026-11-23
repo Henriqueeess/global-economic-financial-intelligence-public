@@ -8,6 +8,7 @@ on:
       - "tests/**"
       - "config/indicadores.yaml"
       - "config/conjuntura.yaml"
+      - "config/projecoes.yaml"
       - "config/panorama.yaml"
       - "requirements.txt"
 

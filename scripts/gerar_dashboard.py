@@ -9,8 +9,10 @@ Saída:
   painel/dashboard.html       página única, sem dependências externas, PT/EN, tema claro e escuro
   dados/conjuntura/*.csv      termômetros, condições financeiras e contas do IPCA (formato longo,
                               pronto para importar no Power BI ou em planilhas)
+  dados/projecoes/*.csv       Focus, cenários pelo erro histórico do Focus e contas de mercado
 
-Nada aqui projeta câmbio, juros de mercado ou preço de ativo (ver config/conjuntura.yaml).
+O projeto não emite previsão própria: as projeções são o Focus do Banco Central, a faixa de erro
+histórico do próprio Focus e contas com premissa declarada (ver config/projecoes.yaml).
 """
 
 from __future__ import annotations
@@ -23,7 +25,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from indicadores import conjuntura  # noqa: E402
+from indicadores import conjuntura, projecoes  # noqa: E402
 from indicadores.util import PASTA_PAINEL, RAIZ, agora, carregar_catalogo, hoje, ler_serie  # noqa: E402
 
 MODELO = Path(__file__).resolve().parent / "indicadores" / "dashboard_modelo.html"
@@ -66,6 +68,23 @@ GRAFICOS = [
      "nota_en": "A reading of current carry. It says nothing about where FX is heading.",
      "unidade": "p.p.", "decimais": 2,
      "series": [{"serie": "br_diferencial_selic_t3m"}, {"serie": "br_diferencial_pre1a_t2a"}]},
+    {"id": "focus_selic", "titulo_pt": "Selic: atual e Focus", "titulo_en": "Selic: actual and Focus",
+     "nota_pt": "Meta Selic e a mediana do Focus para o fim do ano corrente e do seguinte. Cada linha do Focus "
+                "muda de ano de referência em janeiro.",
+     "nota_en": "Selic target and the Focus median for the end of the current and the next year. Each Focus line "
+                "rolls to the next reference year in January.",
+     "unidade": "% a.a.", "decimais": 2,
+     "series": [{"serie": "br_selic_meta"}, {"serie": "br_focus_selic_ano"}, {"serie": "br_focus_selic_ano1"}]},
+    {"id": "focus_cambio", "titulo_pt": "Dólar: PTAX e Focus", "titulo_en": "USD/BRL: PTAX and Focus",
+     "nota_pt": "PTAX de venda e a mediana do Focus para o câmbio no fim do ano corrente e do seguinte.",
+     "nota_en": "PTAX selling rate and the Focus median for the exchange rate at the end of the current and next year.",
+     "unidade": "R$", "decimais": 2,
+     "series": [{"serie": "br_dolar_ptax"}, {"serie": "br_focus_cambio_ano"}, {"serie": "br_focus_cambio_ano1"}]},
+    {"id": "focus_pib", "titulo_pt": "PIB: Focus", "titulo_en": "GDP: Focus",
+     "nota_pt": "Mediana do Focus para o crescimento do PIB no ano corrente e no seguinte.",
+     "nota_en": "Focus median for GDP growth in the current and the next year.",
+     "unidade": "%", "decimais": 2,
+     "series": [{"serie": "br_focus_pib_ano"}, {"serie": "br_focus_pib_ano1"}]},
     {"id": "global_juros", "titulo_pt": "Juros globais", "titulo_en": "Global rates",
      "nota_pt": "Fed funds efetiva, Treasury 10 anos e taxa de depósito do BCE.",
      "nota_en": "Effective fed funds, 10-year Treasury and ECB deposit rate.",
@@ -158,11 +177,52 @@ def montar_dados(ref: dt.date, conj: conjuntura.Conjuntura, cat: dict) -> dict:
             "termometros": termos, "graficos": graficos}
 
 
+def _r(x: float | None, dec: int = 4) -> float | None:
+    return None if x is None else round(x, dec)
+
+
+def montar_projecoes(proj: projecoes.Projecoes) -> dict:
+    variaveis = []
+    for v in proj.variaveis:
+        c = v.cfg
+        anos = [{"ano": h.ano, "data": dia(h.data) if h.data else None, "mediana": _r(h.mediana),
+                 "revisao": _r(h.revisao), "otimista": _r(h.otimista), "pessimista": _r(h.pessimista),
+                 "erro": _r(h.hist.medio_absoluto), "n": h.hist.n}
+                for h in v.horizontes if h.mediana is not None]
+        if anos:
+            variaveis.append({"id": c["id"], "pt": c["nome_pt"], "en": c["nome_en"], "unidade": c["unidade"],
+                              "decimais": c["decimais"], "tipo_erro": c["erro"], "anos": anos})
+    contas = {}
+    if proj.selic:
+        sc = proj.selic
+        contas["selic"] = {"data": dia(sc.data), "pre": _r(sc.prefixado), "efetiva": _r(sc.selic_efetiva),
+                           "dif": _r(sc.diferenca), "fim": _r(sc.fim_12m), "mov": _r(sc.movimentos, 1),
+                           "passo": sc.passo}
+    if proj.cambio:
+        ct = proj.cambio
+        contas["cambio"] = {"data": dia(ct.data), "spot": _r(ct.spot), "br": _r(ct.juro_br), "us": _r(ct.juro_eua),
+                            "termo": _r(ct.termo), "premio": _r(ct.premio_pct)}
+    if proj.pib and proj.pib.focus is not None and proj.pib.ritmo_necessario is not None:
+        pb = proj.pib
+        contas["pib"] = {"ano": pb.ano, "mes": dia(pb.ultimo_mes), "meses": pb.meses, "parado": _r(pb.parado),
+                         "focus": _r(pb.focus), "ritmo": _r(pb.ritmo_necessario), "carry": _r(pb.carry_seguinte)}
+    focus1 = {v["id"]: (v["anos"][1]["mediana"] if len(v["anos"]) > 1 else None) for v in variaveis}
+    return {"revisao_dias": proj.cfg["revisao_dias"], "erro_desde": proj.cfg["erro_desde"],
+            "ano1": proj.ref.year + 1, "variaveis": variaveis, "contas": contas, "focus1": focus1}
+
+
 def gerar(ref: dt.date) -> Path:
     cat = carregar_catalogo()
     conj = conjuntura.calcular(ref, catalogo=cat)
     conjuntura.gravar_csv(conj)
     dados = montar_dados(ref, conj, cat)
+    try:
+        proj = projecoes.calcular(ref, catalogo=cat)
+        projecoes.gravar_csv(proj)
+        dados["projecoes"] = montar_projecoes(proj)
+    except Exception as e:  # as projeções nunca derrubam o dashboard
+        print(f"projeções indisponíveis: {type(e).__name__}: {e}")
+        dados["projecoes"] = None
     bruto = json.dumps(dados, ensure_ascii=False, separators=(",", ":"))
     # o JSON vai dentro de <script>: nada nele pode fechar a tag
     bruto = bruto.replace("</", "<\\/")

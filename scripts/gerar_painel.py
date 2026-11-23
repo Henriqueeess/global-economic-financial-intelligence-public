@@ -20,7 +20,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from indicadores import conjuntura, curva  # noqa: E402
+from indicadores import conjuntura, curva, projecoes  # noqa: E402
 from indicadores.painel import Linha, calcular_linha, destaques, ultimo_ate  # noqa: E402
 from indicadores.svg import grafico_linhas, minigrafico  # noqa: E402
 from indicadores.util import PASTA_PAINEL, RAIZ, carregar_catalogo, hoje, ler_serie, valores  # noqa: E402
@@ -73,6 +73,30 @@ T = {
                 "Se cada mês seguinte repetir a média dos últimos 3 meses ({m3}% ao mês), ele chega a {v_m3} em {fim}; "
                 "se cada mês rodar no ritmo do centro da meta ({meta}%), chega a {v_meta}. Meta: {centro}%, "
                 "com tolerância de {tol} p.p."),
+        "proj": "Projeções",
+        "proj_nota": ("O projeto não faz previsão própria. **Focus** é a mediana das projeções do mercado publicada "
+                      "pelo Banco Central, com a revisão em {dias} dias. **Otimista** e **pessimista** são a mediana "
+                      "mais e menos o erro absoluto médio do próprio Focus no mesmo horizonte, nos anos encerrados "
+                      "desde {desde} (a coluna \"Erro médio\" diz quantos anos entraram). Leitura de análise, "
+                      "não de fato."),
+        "cab_p": "| Variável | Ano | Focus | Revisão {dias}d | Otimista | Pessimista | Erro médio (anos) |",
+        "selic_curva": ("**Selic na curva (conta, não previsão)**: o prefixado de 1 ano do Tesouro paga {pre}% em {d}, "
+                        "{dif} p.p. {lado} da Selic efetiva ({efe}%). Sem prêmio de prazo e com mudanças graduais, "
+                        "isso equivale a uma Selic de {fim}% daqui a 12 meses, cerca de {mov} {tipo_mov} de {passo} p.p. "
+                        "O prefixado do Tesouro costuma embutir prêmio, então a conta tende a exagerar altas e "
+                        "subestimar cortes.{focus}"),
+        "focus_selic": " Focus para o fim de {ano1}: {v}%.",
+        "focus_cambio": " Focus para o fim de {ano1}: R$ {v}.",
+        "acima": "acima", "abaixo": "abaixo", "altas": "altas", "cortes": "cortes",
+        "cambio_termo": ("**Dólar a termo de 12 meses (conta, não previsão)**: com PTAX de R$ {spot} em {d}, prefixado "
+                         "de 1 ano a {br}% e Treasury de 1 ano a {us}%, a paridade coberta de juros dá R$ {termo} "
+                         "({premio}% acima do spot). É o preço que iguala aplicar em reais ou em dólares, não uma "
+                         "aposta de direção.{focus}"),
+        "pib_carry": ("**Carregamento do IBC-Br (conta, não previsão)**: com {meses} meses de {ano} publicados "
+                      "(até {mes}), se o índice ficar parado no último nível até dezembro, o ano fecha com "
+                      "{parado}% de crescimento. Para chegar ao Focus de {focus}%, o índice teria de variar {ritmo}% "
+                      "ao mês daqui até dezembro. Parado no último nível, {ano1} herdaria {carry}%. O IBC-Br é uma "
+                      "aproximação mensal do PIB, não o PIB."),
         "metodo": "Método",
         "metodo_txt": [
             "Fonte única: APIs oficiais e gratuitas listadas em `config/indicadores.yaml`. Nenhum número é digitado à mão.",
@@ -80,6 +104,7 @@ T = {
             "Fins de semana e feriados não têm cotação nova: cada linha mostra a data do último dado real.",
             "Indicadores derivados (diferencial de juros, inclinação, inflação implícita, juro real ex-ante) são calculados a partir das séries oficiais.",
             "Termômetros, condições financeiras e contas do IPCA seguem `config/conjuntura.yaml` e não projetam câmbio, juros nem preço de ativos.",
+            "Projeções seguem `config/projecoes.yaml`: Focus do Banco Central, faixa pelo erro histórico do Focus e contas de mercado com premissa declarada. O projeto não emite previsão própria.",
         ],
         "pp": "p.p.",
         "bps": "{v} p.b.",
@@ -126,6 +151,30 @@ T = {
                 "If each coming month repeats the average of the last 3 months ({m3}% a month), it reaches {v_m3} "
                 "by {fim}; if each month runs at the pace of the target midpoint ({meta}%), it reaches {v_meta}. "
                 "Target: {centro}%, with a {tol} pp tolerance band."),
+        "proj": "Projections",
+        "proj_nota": ("The project does not make its own forecasts. **Focus** is the median of market forecasts "
+                      "published by Brazil's central bank, with the {dias}-day revision. **Optimistic** and "
+                      "**pessimistic** are the median plus and minus Focus's own mean absolute error at the same "
+                      "horizon, over completed years since {desde} (the \"Mean error\" column says how many years "
+                      "were used). This is analysis, not fact."),
+        "cab_p": "| Variable | Year | Focus | {dias}-day revision | Optimistic | Pessimistic | Mean error (years) |",
+        "selic_curva": ("**Selic priced in the curve (arithmetic, not a forecast)**: the 1-year Tesouro fixed-rate "
+                        "yield is {pre}% on {d}, {dif} pp {lado} the effective Selic ({efe}%). With no term premium "
+                        "and gradual moves, that implies a Selic of {fim}% 12 months from now, about {mov} "
+                        "{tipo_mov} of {passo} pp. Tesouro fixed-rate yields usually carry a premium, so this "
+                        "tends to overstate hikes and understate cuts.{focus}"),
+        "focus_selic": " Focus for end-{ano1}: {v}%.",
+        "focus_cambio": " Focus for end-{ano1}: R$ {v}.",
+        "acima": "above", "abaixo": "below", "altas": "hikes", "cortes": "cuts",
+        "cambio_termo": ("**12-month USD/BRL forward (arithmetic, not a forecast)**: with PTAX at R$ {spot} on {d}, "
+                         "the 1-year fixed rate at {br}% and the 1-year Treasury at {us}%, covered interest parity "
+                         "gives R$ {termo} ({premio}% above spot). It is the price that makes holding reais or "
+                         "dollars for 12 months equivalent, not a directional call.{focus}"),
+        "pib_carry": ("**IBC-Br carry-over (arithmetic, not a forecast)**: with {meses} months of {ano} published "
+                      "(through {mes}), if the index stays flat at its latest level until December, the year ends "
+                      "with {parado}% growth. To reach the Focus median of {focus}%, the index would have to change "
+                      "{ritmo}% a month through December. Held flat, {ano1} would inherit {carry}%. IBC-Br is a "
+                      "monthly proxy for GDP, not GDP itself."),
         "metodo": "Method",
         "metodo_txt": [
             "Single source: free official APIs listed in `config/indicadores.yaml`. No number is typed by hand.",
@@ -133,6 +182,7 @@ T = {
             "Weekends and holidays have no new quotes: each row shows the date of the latest actual data point.",
             "Derived indicators (rate differential, curve slope, breakeven inflation, ex-ante real rate) are computed from the official series.",
             "Thermometers, financial conditions and the IPCA arithmetic follow `config/conjuntura.yaml` and do not project FX, rates or asset prices.",
+            "Projections follow `config/projecoes.yaml`: the central bank's Focus survey, a range from Focus's historical error and market arithmetic with stated assumptions. The project makes no forecasts of its own.",
         ],
         "pp": "pp",
         "bps": "{v} bp",
@@ -321,8 +371,69 @@ def secao_termometros(conj: "conjuntura.Conjuntura | None", lang: str, prefixo: 
     return out
 
 
+def _val(x: float, v: dict, lang: str) -> str:
+    n = num(x, v["decimais"], lang)
+    return f"R$ {n}" if v["unidade"] == "R$" else f"{n}%"
+
+
+def _rev(x: float | None, v: dict, lang: str) -> str:
+    if x is None:
+        return "—"
+    return f"{num(x, 2, lang, sinal=True)}%" if v["erro"] == "pct" else f"{num(x, 2, lang, sinal=True)} {T[lang]['pp']}"
+
+
+def secao_projecoes(proj: "projecoes.Projecoes | None", lang: str) -> list[str]:
+    if proj is None or not any(h.mediana is not None for v in proj.variaveis for h in v.horizontes):
+        return []
+    t = T[lang]
+    cfg = proj.cfg
+    out = [f"## {t['proj']}", "", t["proj_nota"].format(dias=cfg["revisao_dias"], desde=cfg["erro_desde"]), "",
+           t["cab_p"].format(dias=cfg["revisao_dias"]), "| --- | ---: | ---: | ---: | ---: | ---: | ---: |"]
+    for v in proj.variaveis:
+        c = v.cfg
+        for h in v.horizontes:
+            if h.mediana is None:
+                continue
+            mae = h.hist.medio_absoluto
+            erro_txt = "—" if mae is None else f"{_rev(mae, c, lang).lstrip('+')} ({h.hist.n})"
+            out.append(f"| {c[f'nome_{lang}']} | {h.ano} | {_val(h.mediana, c, lang)} | {_rev(h.revisao, c, lang)} | "
+                       f"{'—' if h.otimista is None else _val(h.otimista, c, lang)} | "
+                       f"{'—' if h.pessimista is None else _val(h.pessimista, c, lang)} | {erro_txt} |")
+    out.append("")
+
+    ano1 = proj.ref.year + 1
+
+    def focus(id_: str) -> str:
+        v = proj.variavel(id_)
+        h = v.horizontes[1] if v and len(v.horizontes) > 1 else None
+        return "" if not h or h.mediana is None else t[f"focus_{id_}"].format(ano1=ano1, v=num(h.mediana, 2, lang))
+
+    sc = proj.selic
+    if sc:
+        out += [t["selic_curva"].format(
+            pre=num(sc.prefixado, 2, lang), d=data_curta(sc.data, lang), dif=num(abs(sc.diferenca), 2, lang),
+            lado=t["acima"] if sc.diferenca >= 0 else t["abaixo"], efe=num(sc.selic_efetiva, 2, lang),
+            fim=num(sc.fim_12m, 2, lang), mov=num(abs(sc.movimentos), 0, lang),
+            tipo_mov=t["altas"] if sc.movimentos >= 0 else t["cortes"], passo=num(sc.passo, 2, lang),
+            focus=focus("selic")), ""]
+    ct = proj.cambio
+    if ct:
+        out += [t["cambio_termo"].format(
+            spot=num(ct.spot, 4, lang), d=data_curta(ct.data, lang), br=num(ct.juro_br, 2, lang),
+            us=num(ct.juro_eua, 2, lang), termo=num(ct.termo, 4, lang), premio=num(ct.premio_pct, 2, lang),
+            focus=focus("cambio")), ""]
+    pb = proj.pib
+    if pb and pb.focus is not None and pb.ritmo_necessario is not None:
+        out += [t["pib_carry"].format(
+            meses=pb.meses, ano=pb.ano, mes=mes(pb.ultimo_mes, lang), parado=num(pb.parado, 2, lang),
+            focus=num(pb.focus, 2, lang), ritmo=num(pb.ritmo_necessario, 2, lang, sinal=True),
+            ano1=pb.ano + 1, carry=num(pb.carry_seguinte, 2, lang, sinal=True)), ""]
+    return out
+
+
 def montar(lang: str, ref: dt.date, cat: dict, linhas: dict[str, Linha], coleta: dict, prefixo: str,
-           graf: str, outra: str, pasta_graf: Path | None, conj: "conjuntura.Conjuntura | None" = None) -> str:
+           graf: str, outra: str, pasta_graf: Path | None, conj: "conjuntura.Conjuntura | None" = None,
+           proj: "projecoes.Projecoes | None" = None) -> str:
     t = T[lang]
     quando = coleta.get("_coleta")
     coleta_txt = (dt.datetime.fromisoformat(quando).strftime("%d/%m/%Y %Hh%M" if lang == "pt" else "%Y-%m-%d %H:%M")
@@ -330,7 +441,7 @@ def montar(lang: str, ref: dt.date, cat: dict, linhas: dict[str, Linha], coleta:
     out = [f"# {t['titulo']} — {data_curta(ref, lang)}", "", t["outra"].format(arq=outra), "",
            t["intro"].format(coleta=coleta_txt, ref=data_curta(ref, lang), dados=f"{prefixo}dados/series/"), ""]
 
-    validas = [l for l in linhas.values() if l.status != "sem_dados"]
+    validas = [l for l in linhas.values() if l.status != "sem_dados" and l.ind.get("painel", True)]
     top = destaques(validas)
     if top:
         out += [f"## {t['destaques']}", "", t["destaques_nota"], ""]
@@ -340,10 +451,12 @@ def montar(lang: str, ref: dt.date, cat: dict, linhas: dict[str, Linha], coleta:
         out.append("")
 
     out += secao_termometros(conj, lang, prefixo)
+    out += secao_projecoes(proj, lang)
 
     for reg in cat["regioes"]:
         da_regiao = [linhas[i["id"]] for i in cat["indicadores"]
-                     if i["regiao"] == reg["id"] and i["id"] in linhas and linhas[i["id"]].status != "sem_dados"]
+                     if i["regiao"] == reg["id"] and i.get("painel", True) and i["id"] in linhas
+                     and linhas[i["id"]].status != "sem_dados"]
         if not da_regiao:
             continue
         out += [f"## {reg[f'nome_{lang}']}", ""]
@@ -396,6 +509,11 @@ def main() -> int:
     except Exception as e:  # a conjuntura nunca derruba o painel
         print(f"conjuntura indisponível: {type(e).__name__}: {e}")
         conj = None
+    try:
+        proj = projecoes.calcular(ref, catalogo=cat)
+    except Exception as e:  # as projeções nunca derrubam o painel
+        print(f"projeções indisponíveis: {type(e).__name__}: {e}")
+        proj = None
 
     pasta = PASTA_PAINEL / f"{ref:%Y}" / f"{ref:%m}" / ref.isoformat()
     graficos = pasta / "graficos"
@@ -408,10 +526,10 @@ def main() -> int:
     for lang in ("pt", "en"):
         outro = "en" if lang == "pt" else "pt"
         texto = montar(lang, ref, cat, linhas, coleta, prefixo="../../../../", graf="graficos/",
-                       outra=f"painel-{outro}.md", pasta_graf=graficos, conj=conj)
+                       outra=f"painel-{outro}.md", pasta_graf=graficos, conj=conj, proj=proj)
         (pasta / f"painel-{lang}.md").write_text(texto, encoding="utf-8")
         ultimo = montar(lang, ref, cat, linhas, coleta, prefixo="../", graf=f"{relativo}graficos/",
-                        outra=f"ultimo-{outro}.md", pasta_graf=None, conj=conj)
+                        outra=f"ultimo-{outro}.md", pasta_graf=None, conj=conj, proj=proj)
         (PASTA_PAINEL / f"ultimo-{lang}.md").write_text(ultimo, encoding="utf-8")
     print(f"painel gravado em {pasta.relative_to(RAIZ)}")
     return 0

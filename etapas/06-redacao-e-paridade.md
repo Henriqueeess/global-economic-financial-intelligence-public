@@ -14,6 +14,7 @@
 - Antes de gravar, releia cada frase que começa com "a ata", "o Fed", "o BC", "o comunicado" ou equivalente e confirme que o que vem depois está no documento oficial citado.
 
 - Seção 5 (Mercados): abra com o bloco "Daily dashboard" do modelo, com até cinco linhas tiradas de "Largest 7-day moves" do painel do dia e o link para `painel/AAAA/MM/AAAA-MM-DD/painel-en.md`. Copie os números do painel sem arredondar de novo. Sem painel do dia, omita o bloco e registre no log.
+- Seção 9 (Perspectivas): abra com o bloco "Market projections" do modelo, usando só os números da seção "Projections" do painel do dia (Focus, faixa otimista–pessimista, revisão e contas de mercado), copiados sem arredondar de novo. É a única exceção à regra de a análise usar só fatos dos itens, porque esses números são dado oficial de `dados/series/`. Nunca apresente o Focus, a faixa ou as contas como previsão do briefing: o projeto não faz previsão própria (`config/projecoes.yaml`). Sem a seção no painel do dia, omita o bloco e registre no log.
 
 ## 6.2 Edição em português (`relatorio-pt.md`)
 

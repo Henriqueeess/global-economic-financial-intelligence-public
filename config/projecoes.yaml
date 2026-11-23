@@ -1,0 +1,85 @@
+# Projeções de Selic, câmbio, PIB e IPCA
+# Alterações neste arquivo são feitas apenas por pull request.
+#
+# Tudo aqui é calculado por scripts/indicadores/projecoes.py a partir de dados/series/
+# (as séries novas estão no catálogo config/indicadores.yaml, com painel: false).
+# O resultado vai para a seção "Projeções" do painel diário, para painel/dashboard.html
+# e para dados/projecoes/.
+#
+# Regra do projeto (decisão de 23/11/2026): o projeto não emite previsão própria.
+# Há três camadas, sempre com fonte e premissa por escrito:
+#   1. O que o mercado projeta: mediana do Focus (BCB) para o ano corrente e os dois seguintes,
+#      com a revisão em `revisao_dias`.
+#   2. Cenários: a mediana do Focus mais e menos o erro absoluto médio do próprio Focus no
+#      mesmo horizonte, medido desde `erro_desde`. É a faixa em que o mercado costuma errar,
+#      não uma opinião do projeto.
+#   3. O que os preços embutem: contas aritméticas com premissa declarada (Selic na curva,
+#      dólar a termo, carregamento do IBC-Br).
+
+versao: 1
+revisao_dias: 28          # janela da revisão do Focus (4 semanas)
+erro_desde: 2016          # primeiro ano de Focus usado no erro histórico
+erro_min_amostras: 4      # com menos anos que isso, o cenário não é mostrado
+tolerancia_dias: 10       # distância máxima entre a data pedida e a leitura do Focus usada
+
+variaveis:
+  - id: selic
+    nome_pt: "Selic no fim do ano"
+    nome_en: "Selic, year-end"
+    unidade: "% a.a."
+    decimais: 2
+    focus: [br_focus_selic_ano, br_focus_selic_ano1, br_focus_selic_ano2]
+    realizado: br_selic_meta          # último valor do ano
+    erro: pp                          # pp (diferença) | pct (variação %)
+    pessimista: alta                  # direção do cenário pessimista
+  - id: cambio
+    nome_pt: "Dólar no fim do ano"
+    nome_en: "USD/BRL, year-end"
+    unidade: "R$"
+    decimais: 2
+    focus: [br_focus_cambio_ano, br_focus_cambio_ano1, br_focus_cambio_ano2]
+    realizado: br_dolar_ptax
+    erro: pct
+    pessimista: alta
+  - id: pib
+    nome_pt: "PIB, crescimento no ano"
+    nome_en: "GDP growth"
+    unidade: "%"
+    decimais: 2
+    focus: [br_focus_pib_ano, br_focus_pib_ano1, br_focus_pib_ano2]
+    realizado: br_pib_anual
+    erro: pp
+    pessimista: baixa
+  - id: ipca
+    nome_pt: "IPCA no ano"
+    nome_en: "IPCA inflation"
+    unidade: "%"
+    decimais: 2
+    focus: [br_focus_ipca_ano, br_focus_ipca_ano1, br_focus_ipca_ano2]
+    realizado: br_ipca_12m            # leitura de dezembro
+    erro: pp
+    pessimista: alta
+
+mercado:
+  # Selic na curva: o prefixado de 1 ano (Tesouro Direto) comparado com a Selic efetiva
+  # (meta menos `spread_over`). Premissa: sem prêmio de prazo e mudanças graduais e lineares
+  # ao longo de 12 meses, a média da Selic no período é o prefixado e o ponto final fica
+  # a 2 vezes a diferença.
+  selic:
+    prefixado: br_pre_1a
+    selic: br_selic_meta
+    spread_over: 0.10       # Selic efetiva costuma ficar 0,10 p.p. abaixo da meta
+    passo: 0.25             # tamanho de cada movimento contado
+  # Dólar a termo de 12 meses pela paridade coberta de juros:
+  # termo = PTAX × (1 + prefixado 1 ano) / (1 + Treasury 1 ano). Não é previsão: é o preço
+  # que iguala aplicar em reais ou em dólares por 12 meses.
+  cambio:
+    spot: br_dolar_ptax
+    juro_br: br_pre_1a
+    juro_eua: us_t1a
+  # Carregamento estatístico do IBC-Br (proxy mensal do PIB, dessazonalizado):
+  # quanto o ano cresce se o índice ficar parado no último nível até dezembro, e o ritmo
+  # mensal constante que faria o ano bater a mediana do Focus para o PIB.
+  pib:
+    indice: br_ibc_br
+    focus: br_focus_pib_ano

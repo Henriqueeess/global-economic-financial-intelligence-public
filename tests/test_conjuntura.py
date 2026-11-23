@@ -94,9 +94,12 @@ def test_dashboard_nao_deixa_fechar_a_tag_script(tmp_path, monkeypatch):
     monkeypatch.setattr(gerar_dashboard, "MODELO", modelo)
     monkeypatch.setattr(gerar_dashboard, "PASTA_PAINEL", tmp_path)
     monkeypatch.setattr(gerar_dashboard.conjuntura, "gravar_csv", lambda c: [])
+    monkeypatch.setattr(gerar_dashboard.projecoes, "calcular", lambda ref, catalogo: {"y": "</script>"})
+    monkeypatch.setattr(gerar_dashboard.projecoes, "gravar_csv", lambda p: [])
+    monkeypatch.setattr(gerar_dashboard, "montar_projecoes", lambda p: p)
     monkeypatch.setattr(gerar_dashboard, "montar_dados", lambda ref, conj, cat: {"x": "</script><b>"})
     destino = gerar_dashboard.gerar(D(2026, 11, 19))
     html = destino.read_text(encoding="utf-8")
     assert html.count("</script>") == 1
     corpo = html.split("const D = ")[1].split(";</script>")[0]
-    assert json.loads(corpo) == {"x": "</script><b>"}
+    assert json.loads(corpo) == {"x": "</script><b>", "projecoes": {"y": "</script>"}}

@@ -84,12 +84,16 @@ def bcb_focus_12m(fonte: dict, desde: dt.date, ate: dt.date) -> tuple[Obs, str]:
 
 
 def bcb_focus_anual(fonte: dict, desde: dt.date, ate: dt.date) -> tuple[Obs, str]:
-    """Mediana do Focus para o ano corrente de cada data (o ano de referência muda em janeiro)."""
+    """Mediana do Focus para o ano corrente de cada data (o ano de referência muda em janeiro).
+
+    Com `anos_a_frente: N`, o ano de referência é o ano da data + N (1 = ano seguinte).
+    """
     obs: dict[str, float] = {}
+    n = int(fonte.get("anos_a_frente", 0))
     for ano in range(desde.year, ate.year + 1):
         ini = max(desde, dt.date(ano, 1, 1))
         fim = min(ate, dt.date(ano, 12, 31))
-        filtro = (f"Indicador eq '{fonte['indicador']}' and DataReferencia eq '{ano}' "
+        filtro = (f"Indicador eq '{fonte['indicador']}' and DataReferencia eq '{ano + n}' "
                   f"and baseCalculo eq 0 and Data ge '{ini}' and Data le '{fim}'")
         for i in _olinda("ExpectativasMercadoAnuais", filtro):
             if i.get("Mediana") is not None:

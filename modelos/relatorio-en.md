@@ -37,6 +37,9 @@
 <Two to four paragraphs connecting the day's events: interest rate differential, capital flows, market sentiment.>
 
 ## 9. Market Outlook and Risks *(briefing analysis)*
+**Market projections** · [today's dashboard](<link to painel/AAAA/MM/AAAA-MM-DD/painel-en.md#projections>)
+<One sentence with the Focus median for next year's Selic, USD/BRL and GDP, the optimistic–pessimistic range and the 4-week revision, copied from the dashboard's "Projections" section. One sentence with the market arithmetic that diverges most from Focus (Selic priced in the curve or the USD/BRL forward), stated as arithmetic, not as a forecast.>
+
 - **Base case:** …
 - **Upside risks:** …
 - **Downside risks:** …

@@ -37,6 +37,9 @@
 <Dois a quatro parágrafos ligando os acontecimentos do dia: diferencial de juros, fluxos de capital, sentimento de mercado.>
 
 ## 9. Perspectivas e riscos para os mercados *(análise do briefing)*
+**Projeções do mercado** · [painel do dia](<link para painel/AAAA/MM/AAAA-MM-DD/painel-pt.md#projeções>)
+<Uma frase com a mediana do Focus para Selic, dólar e PIB do ano seguinte, a faixa otimista–pessimista e a revisão em 4 semanas, copiadas da seção "Projeções" do painel. Uma frase com a conta de mercado que mais destoa do Focus (Selic na curva ou dólar a termo), dita como conta, não como previsão.>
+
 - **Cenário-base:** …
 - **Riscos de alta:** …
 - **Riscos de baixa:** …

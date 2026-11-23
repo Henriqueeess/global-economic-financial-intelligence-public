@@ -81,6 +81,17 @@ svg.ch text { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular
 .dica b { font-variant-numeric: tabular-nums; font-weight: 600; }
 .fontes { font-size: 12px; color: var(--ink-2); margin-top: 6px; }
 .fontes a { color: var(--ink-2); }
+.proj { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 12px; }
+.proj table { width: 100%; border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.proj td { padding: 5px 0; border-top: 1px solid var(--grid); vertical-align: baseline; white-space: nowrap; }
+.proj td + td { padding-left: 8px; }
+.proj td.a { color: var(--muted); width: 3.2em; }
+.proj td.m { font-weight: 650; font-size: 15px; }
+.proj td.f, .proj td.r { text-align: right; color: var(--ink-2); font-size: 12.5px; }
+.proj .rot { font-size: 11.5px; color: var(--muted); display: flex; justify-content: space-between; margin-top: 2px; }
+.contas { display: grid; gap: 10px; margin-top: 12px; }
+.contas p { margin: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 13.5px; color: var(--ink-2); }
+.contas b { color: var(--ink); }
 footer { margin-top: 32px; font-size: 13px; color: var(--ink-2); }
 footer li { margin: 4px 0; }
 @media (max-width: 560px) { h1 { font-size: 21px; } }
@@ -108,6 +119,13 @@ footer li { margin: 4px 0; }
   <div class="legenda-calor"><span id="leg-0"></span><span class="esc"></span><span id="leg-100"></span></div>
   <div class="icf" id="icf"></div>
 
+  <section id="sec-proj">
+    <h2 id="h-proj"></h2>
+    <p class="nota" id="n-proj"></p>
+    <div class="proj" id="proj"></div>
+    <div class="contas" id="contas"></div>
+  </section>
+
   <h2 id="h-graf"></h2>
   <p class="nota" id="n-graf"></p>
   <div class="graficos" id="graficos"></div>
@@ -119,7 +137,14 @@ const D = /*__DADOS__*/null;
 const TXT = {
   pt: {
     titulo: "Conjuntura macro", sub: "Dados oficiais até {d} · gerado em {g}",
-    aviso: "Leitura descritiva da conjuntura, feita só com dados oficiais. Foco atual: juros e inflação. Não há projeção de câmbio, de juros de mercado nem de preço de ativos. As linhas tracejadas são contas aritméticas com premissa declarada.",
+    aviso: "Leitura da conjuntura feita só com dados oficiais. O projeto não faz previsão própria: as projeções são o Focus do Banco Central, com a faixa de erro histórico do próprio Focus, e contas com premissa declarada. As linhas tracejadas são contas aritméticas.",
+    hProj: "Projeções", nProj: "Mediana do Focus (Banco Central) e a revisão em {r} dias. A faixa vai do cenário otimista ao pessimista: a mediana mais e menos o erro absoluto médio do Focus no mesmo horizonte, nos anos encerrados desde {a}. É análise, não fato.",
+    cabProj: ["Ano", "Focus", "Faixa", "Revisão"], otim: "otimista", pess: "pessimista", erroN: "erro médio {e} em {n} anos",
+    selic: "<b>Selic na curva (conta, não previsão).</b> O prefixado de 1 ano paga {pre}% em {d}, {dif} p.p. {lado} da Selic efetiva ({efe}%). Sem prêmio de prazo e com mudanças graduais, isso leva a Selic a {fim}% em 12 meses, cerca de {mov} {tipo} de {passo} p.p. O prefixado costuma embutir prêmio, então a conta exagera altas.{focus}",
+    focusSelic: " Focus para o fim de {ano1}: {v}%.", focusCambio: " Focus para o fim de {ano1}: R$ {v}.",
+    acima: "acima", abaixo: "abaixo", altas: "altas", cortes: "cortes",
+    cambio: "<b>Dólar a termo de 12 meses (conta, não previsão).</b> PTAX de R$ {spot} em {d}, prefixado de 1 ano a {br}% e Treasury de 1 ano a {us}%: a paridade coberta de juros dá R$ {termo} ({premio}% acima do spot). É o preço que iguala aplicar em reais ou em dólares, não uma aposta de direção.{focus}",
+    pib: "<b>Carregamento do IBC-Br (conta, não previsão).</b> Com {meses} meses de {ano} publicados (até {mes}), se o índice ficar parado até dezembro o ano cresce {parado}%. Para chegar ao Focus de {focus}%, o índice teria de variar {ritmo}% ao mês até dezembro. Parado, {ano1} herdaria {carry}%. O IBC-Br aproxima o PIB, não é o PIB.",
     hTermo: "Termômetros", nTermo: "Cada indicador em percentil do próprio histórico desde {a}: 0 é o menor valor do período, 100 o maior, 50 a mediana. As cores mostram só a posição no histórico, não se é bom ou ruim.",
     leg0: "0 · menor do período", leg100: "100 · maior do período", haUmAno: "há 1 ano: {p}",
     icf: "Índice de condições financeiras (Brasil)", icfNota: "{q} · {d}. Acima de 50, mais apertadas que a mediana desde {a}.",
@@ -131,11 +156,19 @@ const TXT = {
       "Séries diárias aparecem com um ponto por semana antes dos dois últimos anos, para a página ficar leve.",
       "Percentil: posição do último valor entre todos os valores da mesma conta desde {a}. Taxas definidas em reunião contam por dia de vigência.",
       "Metas de inflação: resoluções do CMN (meta contínua de 3% desde 2025).",
+      "Projeções: Focus do Banco Central e contas descritas em config/projecoes.yaml; os números do dia estão em dados/projecoes/.",
     ],
   },
   en: {
     titulo: "Macro conditions", sub: "Official data through {d} · generated {g}",
-    aviso: "A descriptive reading of macro conditions, built only from official data. Current focus: rates and inflation. There is no forecast of FX, market rates or asset prices. Dashed lines are arithmetic under a stated assumption.",
+    aviso: "A reading of macro conditions built only from official data. The project makes no forecasts of its own: projections are the central bank's Focus survey, with a range from Focus's own historical error, and arithmetic under stated assumptions. Dashed lines are arithmetic.",
+    hProj: "Projections", nProj: "Focus median (central bank survey) and its {r}-day revision. The range runs from the optimistic to the pessimistic scenario: the median plus and minus Focus's mean absolute error at the same horizon, over completed years since {a}. This is analysis, not fact.",
+    cabProj: ["Year", "Focus", "Range", "Revision"], otim: "optimistic", pess: "pessimistic", erroN: "mean error {e} over {n} years",
+    selic: "<b>Selic priced in the curve (arithmetic, not a forecast).</b> The 1-year fixed rate is {pre}% on {d}, {dif} pp {lado} the effective Selic ({efe}%). With no term premium and gradual moves, that takes the Selic to {fim}% in 12 months, about {mov} {tipo} of {passo} pp. Fixed-rate yields usually carry a premium, so this overstates hikes.{focus}",
+    focusSelic: " Focus for end-{ano1}: {v}%.", focusCambio: " Focus for end-{ano1}: R$ {v}.",
+    acima: "above", abaixo: "below", altas: "hikes", cortes: "cuts",
+    cambio: "<b>12-month USD/BRL forward (arithmetic, not a forecast).</b> PTAX at R$ {spot} on {d}, 1-year fixed rate at {br}% and 1-year Treasury at {us}%: covered interest parity gives R$ {termo} ({premio}% above spot). It is the price that makes holding reais or dollars equivalent, not a directional call.{focus}",
+    pib: "<b>IBC-Br carry-over (arithmetic, not a forecast).</b> With {meses} months of {ano} published (through {mes}), if the index stays flat until December the year grows {parado}%. To reach the Focus median of {focus}%, the index would have to change {ritmo}% a month through December. Held flat, {ano1} would inherit {carry}%. IBC-Br is a proxy for GDP, not GDP.",
     hTermo: "Thermometers", nTermo: "Each indicator as a percentile of its own history since {a}: 0 is the lowest value in the period, 100 the highest, 50 the median. Colors show position in history only, not whether it is good or bad.",
     leg0: "0 · lowest in period", leg100: "100 · highest in period", haUmAno: "1 year ago: {p}",
     icf: "Financial conditions index (Brazil)", icfNota: "{q} · {d}. Above 50 means tighter than the median since {a}.",
@@ -147,6 +180,7 @@ const TXT = {
       "Daily series show one point per week before the last two years, to keep the page light.",
       "Percentile: where the latest value sits among all values of the same measure since {a}. Policy rates set at meetings count per day in force.",
       "Inflation targets: CMN resolutions (continuous 3% target since 2025).",
+      "Projections: the central bank's Focus survey and the arithmetic described in config/projecoes.yaml; the day's numbers are in dados/projecoes/.",
     ],
   },
 };
@@ -240,6 +274,56 @@ function calor() {
       f(t.icfNota, { q: t.icfQ[Math.min(4, Math.floor(D.icf[1] / 20))], d: fmtData(D.icf[0]), a: D.desde })));
     icf.appendChild(d);
   } else icf.remove();
+}
+
+function sinal(v, dec) { return (v > 0 ? "+" : "") + num(v, dec); }
+function valorProj(v, x) { return v.unidade === "R$" ? `R$ ${num(x, v.decimais)}` : `${num(x, v.decimais)}%`; }
+function revProj(v, x) { return x == null ? "—" : v.tipo_erro === "pct" ? `${sinal(x, 2)}%` : `${sinal(x, 2)} ${lang === "pt" ? "p.p." : "pp"}`; }
+function comNegrito(pai, html) {
+  // os textos são fixos desta página; os números vêm do JSON gerado pelo script. Só <b> vira negrito.
+  html.split(/(<b>.*?<\/b>)/).forEach(parte => {
+    const m = parte.match(/^<b>(.*)<\/b>$/);
+    pai.appendChild(m ? el("b", {}, m[1]) : document.createTextNode(parte));
+  });
+}
+function projecoes() {
+  const t = TXT[lang], P = D.projecoes, sec = document.getElementById("sec-proj");
+  if (!P || !P.variaveis.length) { sec.style.display = "none"; return; }
+  document.getElementById("h-proj").textContent = t.hProj;
+  document.getElementById("n-proj").textContent = f(t.nProj, { r: P.revisao_dias, a: P.erro_desde });
+  const box = document.getElementById("proj"); box.replaceChildren();
+  P.variaveis.forEach(v => {
+    const card = el("div", { class: "bloco" }); card.appendChild(el("h3", {}, v[lang]));
+    const tb = el("table");
+    v.anos.forEach(a => {
+      const tr = el("tr");
+      tr.appendChild(el("td", { class: "a" }, String(a.ano)));
+      tr.appendChild(el("td", { class: "m" }, valorProj(v, a.mediana)));
+      const faixaTxt = a.otimista == null ? "—" :
+        `${valorProj(v, Math.min(a.otimista, a.pessimista))} – ${valorProj(v, Math.max(a.otimista, a.pessimista))}`;
+      const fx = el("td", { class: "f" }, faixaTxt);
+      if (a.erro != null) fx.title = f(t.erroN, { e: revProj(v, a.erro).replace("+", ""), n: a.n });
+      tr.appendChild(fx);
+      tr.appendChild(el("td", { class: "r", title: t.cabProj[3] }, revProj(v, a.revisao)));
+      tb.appendChild(tr);
+    });
+    card.appendChild(tb);
+    const pessAlto = v.anos.some(a => a.pessimista != null && a.pessimista > a.otimista);
+    const rot = el("div", { class: "rot" });
+    rot.appendChild(el("span", {}, `${t.cabProj[0]} · ${t.cabProj[1]}`));
+    rot.appendChild(el("span", {}, `${t.cabProj[2]} (${pessAlto ? t.otim + " – " + t.pess : t.pess + " – " + t.otim}) · ${t.cabProj[3]}`));
+    card.appendChild(rot);
+    box.appendChild(card);
+  });
+  const ct = document.getElementById("contas"); ct.replaceChildren();
+  const c = P.contas, foc = (id, k) => P.focus1[id] == null ? "" : f(t[k], { ano1: P.ano1, v: num(P.focus1[id], 2) });
+  if (c.selic) { const p = el("p"); comNegrito(p, f(t.selic, { pre: num(c.selic.pre, 2), d: fmtData(c.selic.data), dif: num(Math.abs(c.selic.dif), 2),
+    lado: c.selic.dif >= 0 ? t.acima : t.abaixo, efe: num(c.selic.efetiva, 2), fim: num(c.selic.fim, 2), mov: num(Math.abs(c.selic.mov), 0),
+    tipo: c.selic.mov >= 0 ? t.altas : t.cortes, passo: num(c.selic.passo, 2), focus: foc("selic", "focusSelic") })); ct.appendChild(p); }
+  if (c.cambio) { const p = el("p"); comNegrito(p, f(t.cambio, { spot: num(c.cambio.spot, 4), d: fmtData(c.cambio.data), br: num(c.cambio.br, 2),
+    us: num(c.cambio.us, 2), termo: num(c.cambio.termo, 4), premio: num(c.cambio.premio, 2), focus: foc("cambio", "focusCambio") })); ct.appendChild(p); }
+  if (c.pib) { const p = el("p"); comNegrito(p, f(t.pib, { meses: c.pib.meses, ano: c.pib.ano, mes: fmtData(c.pib.mes, true), parado: num(c.pib.parado, 2),
+    focus: num(c.pib.focus, 2), ritmo: sinal(c.pib.ritmo, 2), ano1: c.pib.ano + 1, carry: sinal(c.pib.carry, 2) })); ct.appendChild(p); }
 }
 
 function graficos() {
@@ -354,7 +438,7 @@ function grafico(g, card) {
 
 document.querySelectorAll("#idiomas button").forEach(b => b.onclick = () => { lang = b.dataset.l; tudo(); });
 try { const q = new URLSearchParams(location.search).get("ed"); if (q === "en") lang = "en"; } catch (e) {}
-function tudo() { textos(); calor(); graficos(); }
+function tudo() { textos(); calor(); projecoes(); graficos(); }
 if (D) tudo();
 let tm; addEventListener("resize", () => { clearTimeout(tm); tm = setTimeout(graficos, 150); });
 if (window.matchMedia) matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { calor(); graficos(); });

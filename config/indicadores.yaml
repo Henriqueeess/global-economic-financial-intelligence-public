@@ -10,12 +10,14 @@
 #   nome_pt/en    rótulo nas duas edições do painel
 #   regiao        brasil | eua | zona_do_euro | america_latina
 #   unidade       texto exibido ao lado do valor
-#   frequencia    diaria | semanal | mensal | reuniao
+#   frequencia    diaria | semanal | mensal | reuniao | anual
 #   variacao      pp (diferença em pontos percentuais) | pct (variação percentual)
 #   decimais      casas decimais exibidas
 #   fonte         tipo e parâmetros da API (ver scripts/indicadores/fontes.py)
 #   requer_chave  variável de ambiente necessária; sem ela, o indicador é pulado e registrado no log
 #   ativo         false desliga o indicador sem apagar o histórico
+#   painel        false tira o indicador das tabelas por região do painel (ele segue sendo coletado
+#                 e usado em outras seções, como Projeções)
 
 versao: 1
 backfill_desde: "2016-01-01"     # decisão de 18/11/2026: 10 anos de histórico
@@ -159,6 +161,107 @@ indicadores:
     decimais: 2
     fonte: {tipo: bcb_focus_anual, indicador: PIB Total}
 
+  # PIB anual (IBGE, via SGS): base do erro histórico do Focus em config/projecoes.yaml.
+  - id: br_pib_anual
+    nome_pt: PIB — crescimento real no ano
+    nome_en: GDP — real annual growth
+    regiao: brasil
+    unidade: "%"
+    frequencia: anual
+    variacao: pp
+    decimais: 2
+    painel: false
+    fonte: {tipo: bcb_sgs, codigo: 7326}
+
+  # Focus para os anos seguintes (base das projeções; ver config/projecoes.yaml).
+  - id: br_focus_ipca_ano1
+    nome_pt: Focus — IPCA, ano seguinte
+    nome_en: Focus — IPCA, next year
+    regiao: brasil
+    unidade: "%"
+    frequencia: diaria
+    variacao: pp
+    decimais: 2
+    painel: false
+    fonte: {tipo: bcb_focus_anual, indicador: IPCA, anos_a_frente: 1}
+
+  - id: br_focus_selic_ano1
+    nome_pt: Focus — Selic no fim do ano, ano seguinte
+    nome_en: Focus — Selic, year-end, next year
+    regiao: brasil
+    unidade: "% a.a."
+    frequencia: diaria
+    variacao: pp
+    decimais: 2
+    painel: false
+    fonte: {tipo: bcb_focus_anual, indicador: Selic, anos_a_frente: 1}
+
+  - id: br_focus_cambio_ano1
+    nome_pt: Focus — câmbio no fim do ano, ano seguinte
+    nome_en: Focus — USD/BRL, year-end, next year
+    regiao: brasil
+    unidade: "R$"
+    frequencia: diaria
+    variacao: pct
+    decimais: 2
+    painel: false
+    fonte: {tipo: bcb_focus_anual, indicador: "Câmbio", anos_a_frente: 1}
+
+  - id: br_focus_pib_ano1
+    nome_pt: Focus — PIB, ano seguinte
+    nome_en: Focus — GDP growth, next year
+    regiao: brasil
+    unidade: "%"
+    frequencia: diaria
+    variacao: pp
+    decimais: 2
+    painel: false
+    fonte: {tipo: bcb_focus_anual, indicador: PIB Total, anos_a_frente: 1}
+
+  - id: br_focus_ipca_ano2
+    nome_pt: Focus — IPCA, daqui a 2 anos
+    nome_en: Focus — IPCA, two years ahead
+    regiao: brasil
+    unidade: "%"
+    frequencia: diaria
+    variacao: pp
+    decimais: 2
+    painel: false
+    fonte: {tipo: bcb_focus_anual, indicador: IPCA, anos_a_frente: 2}
+
+  - id: br_focus_selic_ano2
+    nome_pt: Focus — Selic no fim do ano, daqui a 2 anos
+    nome_en: Focus — Selic, year-end, two years ahead
+    regiao: brasil
+    unidade: "% a.a."
+    frequencia: diaria
+    variacao: pp
+    decimais: 2
+    painel: false
+    fonte: {tipo: bcb_focus_anual, indicador: Selic, anos_a_frente: 2}
+
+  - id: br_focus_cambio_ano2
+    nome_pt: Focus — câmbio no fim do ano, daqui a 2 anos
+    nome_en: Focus — USD/BRL, year-end, two years ahead
+    regiao: brasil
+    unidade: "R$"
+    frequencia: diaria
+    variacao: pct
+    decimais: 2
+    painel: false
+    fonte: {tipo: bcb_focus_anual, indicador: "Câmbio", anos_a_frente: 2}
+
+  - id: br_focus_pib_ano2
+    nome_pt: Focus — PIB, daqui a 2 anos
+    nome_en: Focus — GDP growth, two years ahead
+    regiao: brasil
+    unidade: "%"
+    frequencia: diaria
+    variacao: pp
+    decimais: 2
+    painel: false
+    fonte: {tipo: bcb_focus_anual, indicador: PIB Total, anos_a_frente: 2}
+
   # Curva de juros (Tesouro Direto). Vértices de prazo constante, interpolados
   # linearmente entre títulos sem cupom; nunca extrapolados.
   - id: br_pre_1a
@@ -271,6 +374,17 @@ indicadores:
     variacao: pp
     decimais: 2
     fonte: {tipo: us_treasury, coluna: "2 Yr"}
+
+  - id: us_t1a
+    nome_pt: Treasury 1 ano
+    nome_en: 1-year Treasury yield
+    regiao: eua
+    unidade: "%"
+    frequencia: diaria
+    variacao: pp
+    decimais: 2
+    painel: false
+    fonte: {tipo: us_treasury, coluna: "1 Yr"}
 
   - id: us_t10a
     nome_pt: Treasury 10 anos
