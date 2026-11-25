@@ -83,6 +83,16 @@ A página só abre logado na sua conta Google. Se o navegador tiver várias cont
 
 Para parar o e-mail: **Acionadores** → apagar o gatilho `verificarEEnviar`.
 
+#### Se os botões do e-mail mostrarem "Não foi possível abrir o arquivo"
+
+Essa é a página 404 do Google: o endereço `/exec` do botão não corresponde a uma implantação ativa, ou o navegador abriu com outra conta Google.
+
+1. No editor, **Implantar → Gerenciar implantações**. Clique na implantação `Briefing PT/EN` (se não existir, crie como no passo 1 acima) e copie o **URL do app da Web** (botão **Copiar**, termina em `/exec`).
+2. **Configurações do projeto** (engrenagem na barra da esquerda) → **Propriedades do script** → **Editar propriedades do script**. Na linha `URL_PAGINA` (ou em **Adicionar propriedade**, se não existir), cole o endereço copiado e clique em **Salvar propriedades do script**.
+3. Volte em **Editor** (ícone `< >`), escolha a função `conferirUrlPagina` e clique em **Executar**. O registro mostra o endereço que os botões vão usar; ele tem de ser igual ao copiado.
+4. Rode `enviarUltimoAgora` e toque nos botões do e-mail novo. E-mails já recebidos continuam com o endereço antigo.
+5. Se ainda falhar só no celular: o Gmail abre o link no navegador interno, às vezes sem login ou com outra conta. Toque nos três pontos → **Abrir no navegador** (Chrome/Safari) e confirme que a conta ativa é a dona do script.
+
 ### Dashboard da conjuntura (cerca de 5 minutos, depois da página PT/EN)
 
 O mesmo app da Web também mostra o dashboard interativo da conjuntura (`painel/dashboard.html`), com os termômetros e os gráficos desde 2016. O workflow de coleta gera o arquivo todo dia às 05h47; a página sempre mostra a versão mais recente.

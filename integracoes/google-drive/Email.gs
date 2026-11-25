@@ -162,16 +162,23 @@ function paginaPanorama_(token, idioma) {
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 
-/** Endereço do app da web, se ele foi publicado; senão, vazio (o botão de idioma abre o GitHub). */
+/**
+ * Endereço do app da web, lido só da propriedade URL_PAGINA; sem ela, vazio (os botões abrem o GitHub).
+ * Não usa ScriptApp.getService().getUrl(): no editor novo do Apps Script ela devolve um endereço
+ * /exec que não corresponde à implantação "Briefing PT/EN" e o Google responde "Não foi possível
+ * abrir o arquivo" (página 404), como nos botões do e-mail de 25/11/2026.
+ */
 function urlWeb_() {
-  const valida = function (u) { return u && /^https:\/\/script\.google\.com\/.+\/exec$/.test(u) ? u : ''; };
-  const salva = valida(PropertiesService.getScriptProperties().getProperty('URL_PAGINA'));
-  if (salva) return salva;
-  try {
-    return valida(ScriptApp.getService().getUrl());
-  } catch (err) {
-    return '';
-  }
+  const u = PropertiesService.getScriptProperties().getProperty('URL_PAGINA');
+  return u && /^https:\/\/script\.google\.com\/macros\/s\/AKfycb[\w-]{20,}\/exec$/.test(u.trim()) ? u.trim() : '';
+}
+
+/** Rode à mão para ver no registro qual endereço os botões do e-mail vão usar. */
+function conferirUrlPagina() {
+  const u = urlWeb_();
+  console.log(u
+    ? 'Os botões do e-mail vão abrir: ' + u + '?pg=panorama  (abra este endereço no navegador para conferir)'
+    : 'URL_PAGINA não está definida ou não termina em /exec. Os botões vão abrir o GitHub.');
 }
 
 function execucoesDoMes_(token, mes) {

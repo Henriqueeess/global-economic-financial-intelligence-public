@@ -163,3 +163,43 @@ termos:
     definicao: Contracts on the future value of a stock index, traded before the cash market opens.
     traducao: Futuros de índices de ações
     usado_em: ["2026-11-23"]
+  - termo: All-Stock Deal
+    definicao: An acquisition paid with the buyer's own shares instead of cash.
+    traducao: Operação paga integralmente em ações
+    usado_em: ["2026-11-24"]
+  - termo: Entity List
+    definicao: A US Commerce Department list of foreign companies that need a licence to receive US goods and technology.
+    traducao: Lista de entidades (restrições comerciais dos EUA)
+    usado_em: ["2026-11-24"]
+  - termo: Extraordinary Dividend
+    definicao: A one-off payout to shareholders on top of the regular dividend policy.
+    traducao: Dividendos extraordinários
+    usado_em: ["2026-11-24"]
+  - termo: Business Climate Index
+    definicao: A survey-based indicator of how companies assess current conditions and expectations.
+    traducao: Índice de clima de negócios
+    usado_em: ["2026-11-24"]
+  - termo: Austerity Measures
+    definicao: Spending cuts or tax increases meant to reduce a government's deficit and debt.
+    traducao: Medidas de austeridade
+    usado_em: ["2026-11-24"]
+  - termo: Spending Freeze
+    definicao: A temporary block on budgeted spending so that the government stays within its fiscal target or spending cap.
+    traducao: Contingenciamento / congelamento de despesas
+    usado_em: ["2026-11-25"]
+  - termo: Sovereign Rating
+    definicao: A credit agency's assessment of a government's ability and willingness to repay its debt.
+    traducao: Nota soberana (rating soberano)
+    usado_em: ["2026-11-25"]
+  - termo: Technical Recession
+    definicao: Two consecutive quarters of falling GDP.
+    traducao: Recessão técnica
+    usado_em: ["2026-11-25"]
+  - termo: Price Cap
+    definicao: A regulated maximum that suppliers may charge for a product or service.
+    traducao: Teto de preços (preço máximo regulado)
+    usado_em: ["2026-11-25"]
+  - termo: Share Buyback
+    definicao: A company's purchase of its own shares, returning cash to shareholders.
+    traducao: Recompra de ações
+    usado_em: ["2026-11-25"]
